@@ -25,7 +25,7 @@ function AppLoader() {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
-const API_BASE = 'https://anunciaig.com/api';
+const API_BASE = '/api';
 
 const App = () => {
   const { authUser, logout, authFetch } = useAuth();
@@ -102,13 +102,6 @@ const App = () => {
     }));
   }, []);
 
-  const handleAddMinistry = useCallback((name, positions) => {
-    setAppData(prev => ({
-      ...prev,
-      ministries: [...prev.ministries, { id: Date.now().toString(), name, positions }],
-    }));
-  }, []);
-
   const handleAssignPerson = useCallback((assignment) => {
     setAppData(prev => ({
       ...prev,
@@ -127,7 +120,7 @@ const App = () => {
 
   if (loading) return <AppLoader />;
 
-  const { user, users, tcdEntries, events, ministries, assignments } = appData;
+  const { user, users, tcdEntries, events, assignments } = appData;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -161,10 +154,7 @@ const App = () => {
         )}
         {activeTab === 'ministries' && (
           <MinistryManager
-            ministries={ministries}
-            users={users}
             assignments={assignments}
-            onAddMinistry={handleAddMinistry}
             onAssignPerson={handleAssignPerson}
             onAddEvent={handleAddEvent}
           />

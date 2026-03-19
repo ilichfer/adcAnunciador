@@ -107,7 +107,15 @@ function ScheduleView({ events }) {
     [events]
   );
 
-  const [selectedDate, setSelectedDate] = useState(uniqueDates[0] ?? null);
+  // ✅ selectedDate se inicializa con useEffect para reaccionar
+  // cuando uniqueDates cambia tras el fetch
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  useEffect(() => {
+    if (uniqueDates.length > 0) {
+      setSelectedDate(uniqueDates[0]);
+    }
+  }, [uniqueDates]);
 
   const filteredEvents = selectedDate
     ? events.filter((e) => e.date === selectedDate)
@@ -201,7 +209,7 @@ function ScheduleView({ events }) {
 function Schedule() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError]   = useState(null);
 
   useEffect(() => {
     fetch('https://anunciaig.com/api/events')
@@ -210,10 +218,19 @@ function Schedule() {
         return res.json();
       })
       .then((json) => {
-        // Soporta respuesta como array directo o { events: [...] } o un objeto solo
-        const data = Array.isArray(json) ? json : json.events ?? [json];
+        // Soporta: objeto solo, array, o { events: [...] }
+        let data = Array.isArray(json)
+          ? json
+          : json.events
+            ? json.events
+            : [json]; // ← objeto solo → lo envuelve en array
+
+        // Filtrar solo los que tienen fecha válida
+        data = data.filter(e => e && e.date);
+
         // Ordenar por fecha ascendente
         data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
         setEvents(data);
         setLoading(false);
       })

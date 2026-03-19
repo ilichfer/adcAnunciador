@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
 
-// ─── Estado vacío ministerios ─────────────────────────────────────────────────
+const API_MINISTRIES = 'https://anunciaig.com/api/ministries';
+const API_USERS      = 'https://anunciaig.com/api/users';
 
-function EmptyMinistries() {
+// ─── Loader ───────────────────────────────────────────────────────────────────
+
+function Loader() {
   return (
-    <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-14 text-center col-span-full">
-      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-        <i className="fas fa-sitemap text-slate-300 text-3xl"></i>
-      </div>
-      <h3 className="text-lg font-bold text-slate-700 mb-1">Sin ministerios</h3>
-      <p className="text-slate-400 text-sm">Crea el primer ministerio con el botón de arriba.</p>
+    <div className="flex flex-col items-center justify-center p-20 gap-3">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <p className="text-slate-400 text-sm font-medium">Cargando ministerios...</p>
     </div>
   );
 }
@@ -17,6 +18,9 @@ function EmptyMinistries() {
 // ─── Tarjeta de ministerio ────────────────────────────────────────────────────
 
 function MinistryCard({ ministry }) {
+  // Filtrar posiciones sin nombre
+  const positions = (ministry.positions ?? []).filter(p => p.name?.trim());
+
   return (
     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all">
       <div className="flex justify-between items-center mb-4">
@@ -24,14 +28,14 @@ function MinistryCard({ ministry }) {
           <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
             <i className="fas fa-sitemap"></i>
           </div>
-          <h4 className="font-bold text-lg text-slate-800">{ministry.name}</h4>
+          <h4 className="font-bold text-lg text-slate-800 capitalize">{ministry.name}</h4>
         </div>
         <span className="text-[10px] bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-black uppercase">
-          {ministry.positions.length} puestos
+          {positions.length} puestos
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
-        {ministry.positions.map(pos => (
+        {positions.map(pos => (
           <span key={pos.id} className="text-[10px] bg-slate-50 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-100 font-bold uppercase">
             {pos.name}
           </span>
@@ -41,66 +45,24 @@ function MinistryCard({ ministry }) {
   );
 }
 
-// ─── Formulario crear ministerio ──────────────────────────────────────────────
 
-function CreateMinistryForm({ onSave, onCancel }) {
-  const [form, setForm] = useState({ name: '', positions: '' });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const positions = form.positions
-      .split(',')
-      .map(p => p.trim())
-      .filter(Boolean)
-      .map(p => ({ id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, name: p }));
-    onSave(form.name, positions);
-  };
-
-  return (
-    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <h3 className="text-xl font-bold mb-6 text-slate-800">Nuevo Ministerio</h3>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Nombre del Ministerio</label>
-          <input
-            type="text" placeholder="Ej: Audiovisuales" required
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none"
-            value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Posiciones (separadas por coma)</label>
-          <textarea
-            placeholder="Ej: Cámara 1, Consola, Pantallas" required
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none h-28 resize-none"
-            value={form.positions} onChange={e => setForm({ ...form, positions: e.target.value })}
-          />
-          <p className="text-xs text-slate-400 italic">Define qué roles existen dentro de este ministerio.</p>
-        </div>
-        <div className="flex justify-end gap-3">
-          <button type="button" onClick={onCancel} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">Cancelar</button>
-          <button type="submit" className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
-            Crear Ministerio
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
 
 // ─── Formulario vincular servidor ────────────────────────────────────────────
 
 function AssignForm({ ministries, users, onSave, onCancel }) {
   const [form, setForm] = useState({ userId: '', ministryId: '', positionId: '' });
-  const activeMinistry = ministries.find(m => m.id === form.ministryId);
+  const activeMinistry  = ministries.find(m => m.id === form.ministryId);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const user     = users.find(u => u.id === form.userId);
     const ministry = ministries.find(m => m.id === form.ministryId);
     const position = ministry?.positions.find(p => p.id === form.positionId);
-    onSave({ userId: form.userId, ministryId: form.ministryId, positionId: form.positionId,
-              userName: user?.name, ministryName: ministry?.name, positionName: position?.name });
+    onSave({
+      userId: form.userId, ministryId: form.ministryId, positionId: form.positionId,
+      userName: user?.name, ministryName: ministry?.name, positionName: position?.name,
+      id: Date.now().toString(),
+    });
   };
 
   return (
@@ -110,8 +72,8 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Servidor</label>
-            <select
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" required
+            <select required
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none"
               value={form.userId} onChange={e => setForm({ ...form, userId: e.target.value })}
             >
               <option value="">-- Seleccionar --</option>
@@ -120,8 +82,8 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ministerio</label>
-            <select
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" required
+            <select required
+              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none"
               value={form.ministryId} onChange={e => setForm({ ...form, ministryId: e.target.value, positionId: '' })}
             >
               <option value="">-- Seleccionar --</option>
@@ -134,7 +96,7 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
           <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Posición</label>
             <div className="flex flex-wrap gap-2">
-              {activeMinistry.positions.map(pos => (
+              {activeMinistry.positions.filter(p => p.name?.trim()).map(pos => (
                 <button key={pos.id} type="button"
                   onClick={() => setForm({ ...form, positionId: pos.id })}
                   className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
@@ -149,7 +111,7 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
         )}
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={onCancel} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">Cancelar</button>
+          <button type="button" onClick={onCancel} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl">Cancelar</button>
           <button type="submit" disabled={!form.positionId}
             className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
             Guardar Especialidad
@@ -164,29 +126,27 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
 
 function SchedulePlanner({ ministries, users, onSave, onCancel }) {
   const [form, setForm] = useState({ date: '', time: '09:00 AM', ministryId: '', assignments: {} });
-  const activeMinistry = ministries.find(m => m.id === form.ministryId);
-  const assignedCount  = Object.values(form.assignments).filter(Boolean).length;
+  const activeMinistry  = ministries.find(m => m.id === form.ministryId);
+  const assignedCount   = Object.values(form.assignments).filter(Boolean).length;
 
   const handleAssign = (posId, value) =>
     setForm(prev => ({ ...prev, assignments: { ...prev.assignments, [posId]: value } }));
 
   const handleSave = () => {
-    if (!form.date || !form.ministryId) return alert('Completa la fecha y selecciona un ministerio.');
+    if (!form.date || !form.ministryId) return alert('Completa la fecha y el ministerio.');
     const ministry = ministries.find(m => m.id === form.ministryId);
-    const members  = Object.entries(form.assignments)
+    const formatted = Object.entries(form.assignments)
       .filter(([, name]) => name)
-      .map(([posId, personName]) => ({
-        positionId: posId,
-        position:   ministry.positions.find(p => p.id === posId)?.name ?? posId,
-        personName,
-        ministryName: ministry.name,
-      }));
-    if (members.length === 0) return alert('Asigna al menos una persona.');
+      .map(([posId, personName]) => {
+        const pos = ministry.positions.find(p => String(p.id) === String(posId));
+        return { positionId: posId, position: pos?.name ?? posId, personName };
+      });
+    if (!formatted.length) return alert('Asigna al menos una persona.');
     onSave({
-      id:          Date.now().toString(),
-      date:        form.date,
-      time:        form.time,
-      ministries:  [{ [ministry.name]: members }],
+      id: Date.now().toString(),
+      date: form.date,
+      time: form.time,
+      ministries: [{ [ministry.name]: formatted }],
     });
   };
 
@@ -194,10 +154,9 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
     <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl animate-in fade-in zoom-in duration-300">
       <div className="mb-8">
         <h3 className="text-xl font-bold text-slate-800">Planificador de Actividades</h3>
-        <p className="text-slate-500 text-sm mt-1">Configura los roles para el próximo servicio.</p>
+        <p className="text-slate-500 text-sm">Configura los roles para el próximo servicio.</p>
       </div>
 
-      {/* Fecha y ministerio */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100">
         <div className="space-y-1">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha</label>
@@ -219,16 +178,15 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
         </div>
       </div>
 
-      {/* Asignación de posiciones */}
       {activeMinistry && (
-        <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+        <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
                 <i className="fas fa-users-cog"></i>
               </div>
               <div>
-                <h4 className="font-bold text-slate-800">Asignación: {activeMinistry.name}</h4>
+                <h4 className="font-bold text-slate-800 capitalize">{activeMinistry.name}</h4>
                 <p className="text-xs text-slate-400">Selecciona quién ocupará cada puesto.</p>
               </div>
             </div>
@@ -240,7 +198,7 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeMinistry.positions.map(pos => {
+            {activeMinistry.positions.filter(p => p.name?.trim()).map(pos => {
               const assigned = form.assignments[pos.id];
               return (
                 <div key={pos.id} className={`p-4 rounded-2xl border shadow-sm transition-all ${
@@ -326,47 +284,59 @@ function SkillsPanel({ assignments, onAddClick }) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
+const MinistryManager = ({ assignments = [], onAssignPerson, onAddEvent }) => {
+  const { authFetch } = useAuth();
+  const [view, setView]           = useState('list');
+  const [ministries, setMinistries] = useState([]);
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
 
+  // Fetch ministerios y usuarios en paralelo
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      authFetch(API_MINISTRIES).then(r => r.json()),
+      authFetch(API_USERS).then(r => r.json()),
+    ])
+      .then(([ministriesData, usersData]) => {
+        setMinistries(Array.isArray(ministriesData) ? ministriesData : []);
+        setUsers(Array.isArray(usersData) ? usersData : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
-const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssignPerson, onAddEvent }) => {
-  const [view, setView] = useState('list');
-
-  const navBtn = (targetView, label, icon, color = 'indigo') =>
+  const navBtn = (targetView, label, icon, color = 'indigo') => (
     <button
       onClick={() => setView(targetView)}
       className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
         view === targetView
-          ? `bg-${color}-600 text-white shadow-lg shadow-${color}-200`
+          ? color === 'emerald'
+            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200'
+            : 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
           : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
       }`}
     >
       <i className={`fas ${icon}`}></i>{label}
-    </button>;
+    </button>
+  );
+
+  if (loading) return <Loader />;
 
   return (
     <div className="space-y-6">
-      {/* Encabezado con navegación */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold text-slate-800">Panel de Ministerios</h2>
         <div className="flex flex-wrap gap-2">
           {navBtn('create-schedule', 'Nueva Programación', 'fa-calendar-plus', 'emerald')}
-          {navBtn('add-ministry',    'Crear Ministerio',   'fa-plus')}
           {navBtn('list',            'Ver Estructura',     'fa-th-list')}
         </div>
       </div>
 
-      {/* Vistas */}
       {view === 'create-schedule' && (
         <SchedulePlanner
           ministries={ministries} users={users}
-          onSave={(ev) => { onAddEvent(ev); setView('list'); }}
-          onCancel={() => setView('list')}
-        />
-      )}
-
-      {view === 'add-ministry' && (
-        <CreateMinistryForm
-          onSave={(name, positions) => { onAddMinistry(name, positions); setView('list'); }}
+          onSave={(ev) => { if (onAddEvent) onAddEvent(ev); setView('list'); }}
           onCancel={() => setView('list')}
         />
       )}
@@ -374,20 +344,30 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
       {view === 'list' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
           <div className="space-y-4">
-            <h3 className="font-bold text-slate-400 uppercase text-xs tracking-widest px-2">Estructuras Activas</h3>
-            {ministries.length === 0
-              ? <EmptyMinistries />
-              : ministries.map(m => <MinistryCard key={m.id} ministry={m} />)
-            }
+            <h3 className="font-bold text-slate-400 uppercase text-xs tracking-widest px-2">
+              Estructuras Activas
+              <span className="ml-2 normal-case font-medium text-slate-300">({ministries.length})</span>
+            </h3>
+            {ministries.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-14 text-center">
+                <i className="fas fa-sitemap text-slate-300 text-3xl mb-3 block"></i>
+                <p className="text-slate-400 text-sm">No hay ministerios disponibles.</p>
+              </div>
+            ) : (
+              ministries.map(m => <MinistryCard key={m.id} ministry={m} />)
+            )}
           </div>
-          <SkillsPanel assignments={assignments} onAddClick={() => setView('assign')} />
+          <SkillsPanel
+            assignments={assignments}
+            onAddClick={() => setView('assign')}
+          />
         </div>
       )}
 
       {view === 'assign' && (
         <AssignForm
           ministries={ministries} users={users}
-          onSave={(a) => { onAssignPerson(a); setView('list'); }}
+          onSave={(a) => { if (onAssignPerson) onAssignPerson(a); setView('list'); }}
           onCancel={() => setView('list')}
         />
       )}
