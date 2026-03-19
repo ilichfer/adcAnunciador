@@ -1,4 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
+
+const API_URL = 'https://anunciaig.com/api/users';
+
+// ─── Loader ───────────────────────────────────────────────────────────────────
+
+function UsersLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center p-20 gap-3">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <p className="text-slate-400 text-sm font-medium">Cargando usuarios...</p>
+    </div>
+  );
+}
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────
 
@@ -19,15 +33,29 @@ function EmptyUsers() {
 // ─── Fila de usuario ──────────────────────────────────────────────────────────
 
 function UserRow({ user, onToggleStatus }) {
+  const initials = (user.name ?? '?')
+    .split(' ')
+    .map(w => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
   return (
     <tr className={`${user.active ? 'hover:bg-slate-50/50' : 'bg-slate-50 opacity-60'} transition-colors`}>
       <td className="px-6 py-4">
         <div className="flex items-center space-x-3">
-          <img
-            src={user.avatar}
-            className="w-10 h-10 rounded-full border border-slate-200 object-cover"
-            alt={user.name}
-          />
+          {/* Avatar con iniciales si no hay imagen */}
+          {user.avatar ? (
+            <img
+              src={user.avatar}
+              className="w-10 h-10 rounded-full border border-slate-200 object-cover"
+              alt={user.name}
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm border border-indigo-200">
+              {initials}
+            </div>
+          )}
           <div>
             <div className="font-bold text-slate-800">{user.name}</div>
             <div className="text-xs text-slate-400">{user.email}</div>
@@ -35,9 +63,9 @@ function UserRow({ user, onToggleStatus }) {
         </div>
       </td>
       <td className="px-6 py-4">
-        <div className="text-sm font-semibold text-slate-700">{user.ministry}</div>
+        <div className="text-sm font-semibold text-slate-700">{user.ministry ?? '—'}</div>
         <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 mt-1 inline-block">
-          {user.role}
+          {user.role ?? 'Servidor'}
         </span>
       </td>
       <td className="px-6 py-4 text-center">
@@ -66,17 +94,16 @@ function UserRow({ user, onToggleStatus }) {
 
 // ─── Formulario nuevo usuario ─────────────────────────────────────────────────
 
-const ROLES = ['Administrador', 'Líder de Ministerio', 'Servidor', 'Miembro'];
-const EMPTY_USER = { name: '', role: 'Miembro', ministry: '', email: '' };
+const ROLES = ['ADMINISTRADOR', 'Líder de Ministerio', 'Servidor', 'Miembro'];
+const EMPTY_USER = { name: '', role: 'Servidor', ministry: '', email: '' };
 
 function AddUserForm({ onSave, onCancel }) {
   const [form, setForm] = useState(EMPTY_USER);
-
   const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ ...form, avatar: `https://picsum.photos/seed/${form.name}/200/200` });
+    onSave(form);
     setForm(EMPTY_USER);
   };
 
@@ -87,9 +114,9 @@ function AddUserForm({ onSave, onCancel }) {
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {[
-          { label: 'Nombre Completo', key: 'name', type: 'text', placeholder: 'Ej: Andrés Soto' },
-          { label: 'Ministerio',      key: 'ministry', type: 'text', placeholder: 'Ej: Alabanza' },
-          { label: 'Correo',          key: 'email', type: 'email', placeholder: 'correo@ejemplo.com' },
+          { label: 'Nombre Completo', key: 'name',     type: 'text',  placeholder: 'Ej: Andrés Soto' },
+          { label: 'Ministerio',      key: 'ministry', type: 'text',  placeholder: 'Ej: Alabanza' },
+          { label: 'Correo',          key: 'email',    type: 'email', placeholder: 'correo@ejemplo.com' },
         ].map(({ label, key, type, placeholder }) => (
           <div key={key} className="space-y-1">
             <label className="text-xs font-bold text-slate-500 uppercase ml-1">{label}</label>
@@ -124,11 +151,57 @@ function AddUserForm({ onSave, onCancel }) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-const UsersManager = ({ users, onAddUser, onToggleStatus }) => {
+const UsersManager = ({ onAddUser, onToggleStatus }) => {
+  const { authFetch } = useAuth();
+  const [users, setUsers]     = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
   const [showForm, setShowForm] = useState(false);
+
+  // Fetch directo al endpoint
+  useEffect(() => {
+    setLoading(true);
+    authFetch(API_URL)
+      .then(res => {
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        const lista = Array.isArray(data) ? data : data.users ?? [];
+        setUsers(lista);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleToggle = (id) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, active: !u.active } : u));
+    if (onToggleStatus) onToggleStatus(id);
+  };
+
+  const handleAdd = (newUser) => {
+    setUsers(prev => [...prev, { ...newUser, id: Date.now(), active: true }]);
+    setShowForm(false);
+    if (onAddUser) onAddUser(newUser);
+  };
 
   const activeCount   = users.filter(u => u.active).length;
   const inactiveCount = users.length - activeCount;
+
+  if (loading) return <UsersLoader />;
+
+  if (error) return (
+    <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl">
+      <div className="flex items-center gap-3 mb-1">
+        <i className="fas fa-exclamation-triangle"></i>
+        <h3 className="font-bold">Error al cargar usuarios</h3>
+      </div>
+      <p className="text-sm">{error}</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -153,12 +226,11 @@ const UsersManager = ({ users, onAddUser, onToggleStatus }) => {
 
       {showForm && (
         <AddUserForm
-          onSave={(u) => { onAddUser(u); setShowForm(false); }}
+          onSave={handleAdd}
           onCancel={() => setShowForm(false)}
         />
       )}
 
-      {/* Tabla o estado vacío */}
       {users.length === 0 ? (
         <EmptyUsers />
       ) : (
@@ -176,7 +248,7 @@ const UsersManager = ({ users, onAddUser, onToggleStatus }) => {
               </thead>
               <tbody className="divide-y">
                 {users.map(user => (
-                  <UserRow key={user.id} user={user} onToggleStatus={onToggleStatus} />
+                  <UserRow key={user.id} user={user} onToggleStatus={handleToggle} />
                 ))}
               </tbody>
             </table>

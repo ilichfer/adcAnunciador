@@ -25,7 +25,7 @@ function AppLoader() {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
-const API_BASE = '/api';
+const API_BASE = 'https://anunciaig.com/api';
 
 const App = () => {
   const { authUser, logout, authFetch } = useAuth();
@@ -42,6 +42,15 @@ const App = () => {
   // loading solo aplica cuando hay sesión activa y se están cargando datos
   const [loading, setLoading] = useState(false);
 
+  // Normaliza usuarios — la API ya devuelve name/role/active, solo completamos avatar
+  const mapearUsuario = (p) => ({
+    ...p,
+    avatar:   p.avatar ?? `https://picsum.photos/seed/${p.id}/200/200`,
+    active:   p.active === true,
+    role:     p.role ?? 'Servidor',
+    ministry: p.ministry ?? '',
+  });
+
   // Un solo fetch que carga todo en paralelo (con token en headers via authFetch)
   useEffect(() => {
     if (!authUser) return; // sin sesión → mostrar Login, no cargar datos
@@ -56,7 +65,9 @@ const App = () => {
     ]).then(([user, users, events, ministries, tcd, assignments]) => {
       setAppData({
         user:        user.status === 'fulfilled'        ? user.value        : null,
-        users:       users.status === 'fulfilled'       ? users.value       : [],
+        users:       users.status === 'fulfilled'
+                       ? (Array.isArray(users.value) ? users.value.map(mapearUsuario) : [])
+                       : [],
         events:      events.status === 'fulfilled'
                        ? (Array.isArray(events.value) ? events.value : events.value?.events ?? [])
                        : [],
