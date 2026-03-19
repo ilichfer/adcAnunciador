@@ -127,8 +127,8 @@ const App = () => {
       <Header onLogout={logout} userName={authUser?.nombre} rol={authUser?.rol} />
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {user && activeTab === 'profile' && (
-          <Profile user={user} events={events} />
+        {activeTab === 'profile' && (
+          <Profile events={events} />
         )}
         {activeTab === 'schedule' && (
           <ErrorBoundary>
