@@ -15,6 +15,11 @@ function Loader() {
   );
 }
 
+const SelectedUsersMinistry = ({ user }) => (
+  <option value={user.id}>{user.nombre + ' ' + user.apellido}</option>
+);
+
+
 // ─── Tarjeta de ministerio ────────────────────────────────────────────────────
 
 function MinistryCard({ ministry }) {
@@ -128,18 +133,44 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
   const [form, setForm] = useState({ date: '', time: '09:00 AM', ministryId: '', assignments: {} });
   const activeMinistry  = ministries.find(m => m.id === form.ministryId);
   const assignedCount   = Object.values(form.assignments).filter(Boolean).length;
+  const [usersMin, setUsersMin] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+   // fetch(`https://jscamp-api.vercel.app/api/jobs/${activeMinistry?.id}`)
+    fetch(`https://anunciaig.com/api/ministries/${activeMinistry?.id}/personas`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Error al cargar el ministerio: ${response.statusText}`);
+        }
+
+        return response.json()
+      })
+      .then(json => {
+        setUsersMin(json)
+      })
+      .catch(err => {
+        setError(err.message)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [activeMinistry])
 
   const handleAssign = (posId, value) =>
     setForm(prev => ({ ...prev, assignments: { ...prev.assignments, [posId]: value } }));
 
   const handleSave = () => {
     if (!form.date || !form.ministryId) return alert('Completa la fecha y el ministerio.');
+    console.log('Guardando programación con datos:', ministries, users, form);
     const ministry = ministries.find(m => m.id === form.ministryId);
+    const date = form.date;
     const formatted = Object.entries(form.assignments)
       .filter(([, name]) => name)
-      .map(([posId, personName]) => {
-        const pos = ministry.positions.find(p => String(p.id) === String(posId));
-        return { positionId: posId, position: pos?.name ?? posId, personName };
+      .map(([posId, personId]) => {
+        console.log('Posición asignada:', { fechaServicio :date , idPersona: personId, idPosicion: posId, idMinisterio: ministry.id });
+        return { fechaServicio :date , idPersona: personId, idPosicion: posId, idMinisterio: ministry.id };
       });
     if (!formatted.length) return alert('Asigna al menos una persona.');
     onSave({
@@ -149,6 +180,8 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
       ministries: [{ [ministry.name]: formatted }],
     });
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl animate-in fade-in zoom-in duration-300">
@@ -178,7 +211,7 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
         </div>
       </div>
 
-      {activeMinistry && (
+      {activeMinistry && usersMin && (
         <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
@@ -219,8 +252,9 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
                     onChange={e => handleAssign(pos.id, e.target.value)}
                   >
                     <option value="">-- Sin asignar --</option>
-                    {users.filter(u => u.active).map(u => (
-                      <option key={u.id} value={u.name}>{u.name}</option>
+
+                    {usersMin.map(u => (
+                      <SelectedUsersMinistry key={u.id} user={u} /> 
                     ))}
                   </select>
                 </div>

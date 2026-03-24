@@ -7,13 +7,15 @@ export const AuthProvider = ({ children }) => {
     const token  = localStorage.getItem('adc_token');
     const rol    = localStorage.getItem('adc_rol');
     const nombre = localStorage.getItem('adc_nombre');
-    return token ? { token, rol, nombre } : null;
+    const id     = localStorage.getItem('adc_id');
+    return token ? { token, rol, nombre, id } : null;
   });
 
   const login = (data) => {
     localStorage.setItem('adc_token',  data.token);
     localStorage.setItem('adc_rol',    data.rol);
     localStorage.setItem('adc_nombre', data.nombre ?? '');
+    localStorage.setItem('adc_id',     data.id ?? '');
     setAuthUser(data);
   };
 
@@ -21,6 +23,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('adc_token');
     localStorage.removeItem('adc_rol');
     localStorage.removeItem('adc_nombre');
+    localStorage.removeItem('adc_id');
     setAuthUser(null);
   };
 

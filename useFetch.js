@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const BASE_URL = 'https://anunciaig.com';
+//const BASE_URL = 'https://anunciaig.com';
+const BASE_URL = 'http://localhost:5000/';
 
 const useFetch = (endpoint) => {
   const [data, setData] = useState(null);

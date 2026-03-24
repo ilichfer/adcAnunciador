@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
-const API_URL = 'https://anunciaig.com/api/user';
+const API_USER     = '/api/user';
+const API_SCHEDULE = '/api/schedule/persona'; // endpoint que devuelve la programación
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -14,9 +15,197 @@ function ProfileLoader() {
   );
 }
 
-// ─── Perfil ───────────────────────────────────────────────────────────────────
+// ─── Tarjeta de turno ─────────────────────────────────────────────────────────
 
-function ProfileView({ user, events = [] }) {
+function TurnoCard({ turno }) {
+  const fecha = new Date(turno.fechaServcio + 'T00:00:00');
+  const hoy   = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const esFuturo = fecha >= hoy;
+
+  const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
+  const diaCorto = fecha.toLocaleDateString('es-ES', {
+    weekday: 'short',
+    day: 'numeric',
+  });
+
+  return (
+    <div className={`p-4 rounded-2xl border transition-all hover:shadow-md ${
+      esFuturo
+        ? 'bg-white border-slate-200 hover:border-indigo-300'
+        : 'bg-slate-50 border-slate-100 opacity-70'
+    }`}>
+      {/* Fecha */}
+      <div className="flex justify-between items-start mb-3">
+        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+          esFuturo
+            ? 'bg-indigo-50 text-indigo-600'
+            : 'bg-slate-100 text-slate-400'
+        }`}>
+          {diaCorto}
+        </span>
+        {!esFuturo && (
+          <span className="text-[10px] text-slate-300 font-bold uppercase">Pasado</span>
+        )}
+      </div>
+
+      {/* Ministerio */}
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-6 h-6 rounded-lg bg-purple-100 flex items-center justify-center">
+          <i className="fas fa-sitemap text-purple-500 text-[10px]"></i>
+        </div>
+        <span className="text-xs font-black text-purple-600 uppercase tracking-wider">
+          {turno.nombreMinisterio}
+        </span>
+      </div>
+
+      {/* Posición */}
+      <div className="font-bold text-slate-800 text-sm mb-2">
+        {turno.posicion}
+      </div>
+
+      {/* Encargado */}
+      <div className="flex items-center gap-1.5 text-slate-400">
+        <i className="fas fa-user-shield text-[10px]"></i>
+        <span className="text-[10px] font-medium">{turno.encargado}</span>
+      </div>
+
+      {/* Fecha completa al fondo */}
+      <div className="mt-3 pt-3 border-t border-slate-100">
+        <span className="text-[10px] text-slate-400 capitalize">{fechaFormateada}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Sección de programación ──────────────────────────────────────────────────
+
+function MiProgramacion({ schedule, loading, error }) {
+
+  const [filtro, setFiltro] = useState('proximos'); // 'proximos' | 'todos'
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const ordenados = useMemo(() => {
+    if (!Array.isArray(schedule)) return [];
+    return [...schedule].sort((a, b) =>
+      new Date(a.fechaServcio) - new Date(b.fechaServcio)
+    );
+  }, [schedule]);
+
+  const filtrados = useMemo(() => {
+    if (filtro === 'proximos') {
+      return ordenados.filter(t => new Date(t.fechaServcio + 'T00:00:00') >= hoy);
+    }
+    return ordenados;
+  }, [ordenados, filtro]);
+
+  // Agrupar por mes
+  const porMes = useMemo(() => {
+    const grupos = {};
+    filtrados.forEach(turno => {
+      const key = new Date(turno.fechaServcio + 'T00:00:00')
+        .toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      if (!grupos[key]) grupos[key] = [];
+      grupos[key].push(turno);
+    });
+    return grupos;
+  }, [filtrados]);
+
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <i className="fas fa-calendar-alt text-indigo-500"></i>
+          Mi Programación
+        </h3>
+        {/* Filtro */}
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+          <button
+            onClick={() => setFiltro('proximos')}
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              filtro === 'proximos'
+                ? 'bg-white text-indigo-600 shadow-sm'
+                : 'text-slate-500 hover:text-indigo-400'
+            }`}
+          >
+            Próximos
+          </button>
+          <button
+            onClick={() => setFiltro('todos')}
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              filtro === 'todos'
+                ? 'bg-white text-indigo-600 shadow-sm'
+                : 'text-slate-500 hover:text-indigo-400'
+            }`}
+          >
+            Todos
+          </button>
+        </div>
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-10 gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <p className="text-slate-400 text-sm">Cargando turnos...</p>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && !loading && (
+        <div className="text-center py-10 bg-red-50 rounded-xl border border-red-100">
+          <i className="fas fa-exclamation-triangle text-red-300 text-2xl mb-2 block"></i>
+          <p className="text-red-400 text-sm">No se pudo cargar la programación</p>
+        </div>
+      )}
+
+      {/* Vacío */}
+      {!loading && !error && filtrados.length === 0 && (
+        <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <i className="fas fa-calendar-times text-slate-300 text-3xl mb-3 block"></i>
+          <p className="text-slate-400 text-sm">
+            {filtro === 'proximos'
+              ? 'No tienes turnos próximos programados.'
+              : 'No tienes turnos registrados.'}
+          </p>
+        </div>
+      )}
+
+      {/* Lista agrupada por mes */}
+      {!loading && !error && filtrados.length > 0 && (
+        <div className="space-y-8">
+          {Object.entries(porMes).map(([mes, turnos]) => (
+            <div key={mes} className="space-y-4">
+              <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 pb-2 capitalize">
+                {mes}
+                <span className="ml-2 normal-case font-medium text-slate-300">
+                  ({turnos.length} turno{turnos.length !== 1 ? 's' : ''})
+                </span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {turnos.map((turno, idx) => (
+                  <TurnoCard key={`${turno.fechaServcio}-${turno.idMinisterio}-${idx}`} turno={turno} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Vista del perfil ─────────────────────────────────────────────────────────
+
+function ProfileView({ user, schedule, scheduleLoading, scheduleError }) {
 
   const ministerios = useMemo(() => {
     if (!user?.ministry) return [];
@@ -32,55 +221,6 @@ function ProfileView({ user, events = [] }) {
       .join('')
       .toUpperCase();
   }, [user?.name]);
-
-  const personalSchedule = useMemo(() => {
-    if (!user?.name || !Array.isArray(events)) return [];
-
-    const now           = new Date();
-    const currentMonth  = now.getMonth();
-    const currentYear   = now.getFullYear();
-    const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
-    const nextMonth     = nextMonthDate.getMonth();
-    const nextMonthYear = nextMonthDate.getFullYear();
-
-    return events
-      .filter(event => {
-        const d = new Date(event.date + 'T00:00:00');
-        const inRange =
-          (d.getMonth() === currentMonth && d.getFullYear() === currentYear) ||
-          (d.getMonth() === nextMonth     && d.getFullYear() === nextMonthYear);
-        if (!inRange) return false;
-
-        const mins = Array.isArray(event.ministries) ? event.ministries : [];
-        return mins.some(minObj =>
-          Object.values(minObj).flat().some(a => a.personName === user.name)
-        );
-      })
-      .map(event => {
-        const userAssignments = [];
-        (Array.isArray(event.ministries) ? event.ministries : []).forEach(minObj => {
-          Object.entries(minObj).forEach(([minName, positions]) => {
-            positions.forEach(asgn => {
-              if (asgn.personName === user.name)
-                userAssignments.push({ ministry: minName, position: asgn.position });
-            });
-          });
-        });
-        return { ...event, userAssignments };
-      })
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [events, user?.name]);
-
-  const groupedByMonth = useMemo(() => {
-    const groups = {};
-    personalSchedule.forEach(item => {
-      const key = new Date(item.date + 'T00:00:00')
-        .toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(item);
-    });
-    return groups;
-  }, [personalSchedule]);
 
   return (
     <div className="space-y-6">
@@ -151,52 +291,12 @@ function ProfileView({ user, events = [] }) {
         </div>
       </div>
 
-      {/* ─── Programación personal ───────────────────────────────────── */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-          <i className="fas fa-calendar-alt text-indigo-500"></i>
-          Mi Programación
-        </h3>
-
-        {personalSchedule.length === 0 ? (
-          <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <i className="fas fa-calendar-times text-slate-300 text-3xl mb-3 block"></i>
-            <p className="text-slate-400 text-sm">No tienes actividades programadas para este mes ni el próximo.</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {Object.entries(groupedByMonth).map(([month, items]) => (
-              <div key={month} className="space-y-4">
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 pb-2">
-                  {month}
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {items.map(item => (
-                    <div key={item.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:border-indigo-200 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">
-                          {new Date(item.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })}
-                        </span>
-                        {item.time && (
-                          <span className="text-[10px] font-bold text-slate-400">{item.time}</span>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        {item.userAssignments.map((asgn, idx) => (
-                          <div key={idx} className="flex flex-col">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{asgn.ministry}</span>
-                            <span className="text-sm font-bold text-slate-700">{asgn.position}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* ─── Programación ────────────────────────────────────────────── */}
+      <MiProgramacion
+        schedule={schedule}
+        loading={scheduleLoading}
+        error={scheduleError}
+      />
 
     </div>
   );
@@ -204,46 +304,66 @@ function ProfileView({ user, events = [] }) {
 
 // ─── Componente raíz con fetch ────────────────────────────────────────────────
 
-const Profile = ({ events = [] }) => {
+const Profile = () => {
   const { authFetch, authUser } = useAuth();
-  const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
 
+  const [user, setUser]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [schedule, setSchedule]           = useState([]);
+  const [scheduleLoading, setSchLoading]  = useState(true);
+  const [scheduleError, setSchError]      = useState(false);
+
+  // Fetch datos del usuario
   useEffect(() => {
     if (!authUser) return;
-    setLoading(true);
+    authFetch(API_USER)
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => setUser(data))
+      .catch(() => setUser({
+        name:     authUser?.nombre ?? 'Usuario',
+        role:     authUser?.rol    ?? 'Servidor',
+        email:    '',
+        phone:    '',
+        avatar:   null,
+        ministry: [],
+      }))
+      .finally(() => setLoading(false));
+  }, [authUser]);
 
-    authFetch(API_URL)
+  // Fetch programación personal — pasa el id en la URL
+  useEffect(() => {
+    if (!authUser) return;
+    const id = authUser?.id;
+    if (!id) {
+      setSchError(true);
+      setSchLoading(false);
+      return;
+    }
+    setSchLoading(true);
+    authFetch(`${API_SCHEDULE}/${id}`)
       .then(res => {
-        if (!res.ok) throw new Error(`Error ${res.status}`);
+        if (!res.ok) throw new Error();
         return res.json();
       })
       .then(data => {
-        setUser(data);
-        setLoading(false);
+        setSchedule(Array.isArray(data) ? data : []);
+        setSchError(false);
       })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
+      .catch(() => setSchError(true))
+      .finally(() => setSchLoading(false));
   }, [authUser]);
 
   if (loading) return <ProfileLoader />;
+  if (!user)   return null;
 
-  if (error) return (
-    <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl">
-      <div className="flex items-center gap-3 mb-1">
-        <i className="fas fa-exclamation-triangle"></i>
-        <h3 className="font-bold">Error al cargar el perfil</h3>
-      </div>
-      <p className="text-sm">{error}</p>
-    </div>
+  return (
+    <ProfileView
+      user={user}
+      schedule={schedule}
+      scheduleLoading={scheduleLoading}
+      scheduleError={scheduleError}
+    />
   );
-
-  if (!user) return null;
-
-  return <ProfileView user={user} events={events} />;
 };
 
 export default Profile;
