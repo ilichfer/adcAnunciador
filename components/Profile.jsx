@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const API_USER     = '/api/user';
-const API_SCHEDULE = '/api/schedule/persona'; // endpoint que devuelve la programación
+const API_SCHEDULE = 'https://anunciaig.com/api/schedule/persona'; // endpoint que devuelve la programación
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -44,42 +44,45 @@ function TurnoCard({ turno }) {
       <div className="flex justify-between items-start mb-3">
         <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
           esFuturo
-            ? 'bg-indigo-50 text-indigo-600'
-            : 'bg-slate-100 text-slate-400'
+            ? 'bg-indigo-50 text-indigo-900'
+            : 'bg-slate-100 text-slate-700'
         }`}>
           {diaCorto}
         </span>
         {!esFuturo && (
-          <span className="text-[10px] text-slate-300 font-bold uppercase">Pasado</span>
+          <span className="text-[10px] text-slate-900 font-bold uppercase">Pasado</span>
         )}
       </div>
 
       {/* Ministerio */}
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-lg bg-purple-100 flex items-center justify-center">
+        <div className="w-6 h-6 rounded-lg bg-purple-400 flex items-center justify-center">
           <i className="fas fa-sitemap text-purple-500 text-[10px]"></i>
         </div>
-        <span className="text-xs font-black text-purple-600 uppercase tracking-wider">
+        <span className="text-s font-black text-purple-600 uppercase tracking-wider">
           {turno.nombreMinisterio}
         </span>
       </div>
 
       {/* Posición */}
-      <div className="font-bold text-slate-800 text-sm mb-2">
+      <div className="font-bold text-slate-800 text-xl mb-2">
         {turno.posicion}
       </div>
 
       {/* Encargado */}
-      <div className="flex items-center gap-1.5 text-slate-400">
-        <i className="fas fa-user-shield text-[10px]"></i>
-        <span className="text-[10px] font-medium">{turno.encargado}</span>
+      <div className="flex items-center gap-1.5 text-slate-800">
+        <i className="fas fa-user-shield text-[20px]"></i>
+        <span className="text-[20px] font-bold">{turno.encargado}</span>
       </div>
 
       {/* Fecha completa al fondo */}
-      <div className="mt-3 pt-3 border-t border-slate-100">
-        <span className="text-[10px] text-slate-400 capitalize">{fechaFormateada}</span>
+      <div className="mt-3 pt-3 border-t border-slate-00">
+        <span className="text-[15px] text-slate-900 capitalize">{fechaFormateada}</span>
       </div>
     </div>
+
+
+
   );
 }
 
@@ -125,30 +128,7 @@ function MiProgramacion({ schedule, loading, error }) {
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <i className="fas fa-calendar-alt text-indigo-500"></i>
           Mi Programación
-        </h3>
-        {/* Filtro */}
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
-          <button
-            onClick={() => setFiltro('proximos')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-              filtro === 'proximos'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-slate-500 hover:text-indigo-400'
-            }`}
-          >
-            Próximos
-          </button>
-          <button
-            onClick={() => setFiltro('todos')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-              filtro === 'todos'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-slate-500 hover:text-indigo-400'
-            }`}
-          >
-            Todos
-          </button>
-        </div>
+        </h3>        
       </div>
 
       {/* Loading */}
@@ -168,7 +148,7 @@ function MiProgramacion({ schedule, loading, error }) {
       )}
 
       {/* Vacío */}
-      {!loading && !error && filtrados.length === 0 && (
+      {!loading && !error && schedule.length === 0 && (
         <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
           <i className="fas fa-calendar-times text-slate-300 text-3xl mb-3 block"></i>
           <p className="text-slate-400 text-sm">
@@ -180,23 +160,16 @@ function MiProgramacion({ schedule, loading, error }) {
       )}
 
       {/* Lista agrupada por mes */}
-      {!loading && !error && filtrados.length > 0 && (
+      {!loading && !error && schedule.length > 0 && (
         <div className="space-y-8">
-          {Object.entries(porMes).map(([mes, turnos]) => (
-            <div key={mes} className="space-y-4">
-              <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 pb-2 capitalize">
-                {mes}
-                <span className="ml-2 normal-case font-medium text-slate-300">
-                  ({turnos.length} turno{turnos.length !== 1 ? 's' : ''})
-                </span>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {turnos.map((turno, idx) => (
-                  <TurnoCard key={`${turno.fechaServcio}-${turno.idMinisterio}-${idx}`} turno={turno} />
-                ))}
-              </div>
-            </div>
-          ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {schedule.map((turno, idx) => (
+    <TurnoCard
+      key={`${turno.fechaServcio}-${turno.idMinisterio}-${idx}`}
+      turno={turno}
+    />
+  ))}
+</div>
         </div>
       )}
     </div>
@@ -331,7 +304,7 @@ const Profile = () => {
   }, [authUser]);
 
   // Fetch programación personal — pasa el id en la URL
-  useEffect(() => {
+  /*useEffect(() => {
     if (!authUser) return;
     const id = authUser?.id;
     if (!id) {
@@ -341,6 +314,7 @@ const Profile = () => {
     }
     setSchLoading(true);
     authFetch(`${API_SCHEDULE}/${id}`)
+     fetch(`${API_SCHEDULE}/${id}`)
       .then(res => {
         if (!res.ok) throw new Error();
         return res.json();
@@ -352,6 +326,31 @@ const Profile = () => {
       .catch(() => setSchError(true))
       .finally(() => setSchLoading(false));
   }, [authUser]);
+  */
+
+  useEffect(() => {
+    if (!authUser) return;
+    const id = authUser?.id;
+   // fetch(`https://jscamp-api.vercel.app/api/jobs/${activeMinistry?.id}`)
+    fetch(`https://anunciaig.com/api/schedule/persona/${id}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Error al cargar el ministerio: ${response.statusText}`);
+        }
+
+        return response.json()
+      })
+      .then(json => {
+        setSchedule(json)
+        setSchLoading(false)
+      })
+      .catch(err => {
+        setSchError(err.message)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [authUser])
 
   if (loading) return <ProfileLoader />;
   if (!user)   return null;

@@ -58,7 +58,7 @@ function CoordinatorBanner({ coordinator }) {
       </div>
       <div className="hidden md:flex items-center gap-3 bg-emerald-900/20 px-4 py-2 rounded-xl border border-emerald-900/20">
         <i className="fas fa-user-shield text-emerald-900"></i>
-        <span className="text-emerald-900 text-xs font-black uppercase tracking-widest">Líder de Turno</span>
+        <span className="text-emerald-900 text-xs font-black uppercase tracking-widest">Coordinador</span>
       </div>
     </div>
   );
