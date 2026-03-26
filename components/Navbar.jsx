@@ -8,6 +8,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
   const tabs = [
     { id: 'schedule', label: 'Programación', icon: 'fa-calendar-alt' },
+    { id: 'service-search', label: 'Consultar Servicios', icon: 'fa-search' },
     { id: 'ministries', label: 'Ministerios', icon: 'fa-sitemap' },
     { id: 'users', label: 'Usuarios', icon: 'fa-users' },
     { 

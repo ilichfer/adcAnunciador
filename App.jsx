@@ -8,6 +8,7 @@ import UsersManager from './components/UsersManager.jsx';
 import TCDManager from './components/TCDManager.jsx';
 import Reports from './components/Reports.jsx';
 import MinistryManager from './components/MinistryManager.jsx';
+import ServiceSearch from './components/ServiceSearch.jsx';
 import Contact from './components/Contact.jsx';
 import Login from './components/Login.jsx';
 import { useAuth } from './context/AuthContext.jsx';
@@ -33,6 +34,7 @@ const App = () => {
     tcdEntries:  [],
     events:      [],
     ministries:  [],
+    assignments: [],
   });
 
   const mapearUsuario = (p) => ({
@@ -55,7 +57,8 @@ const App = () => {
       authFetch(`${API_BASE}/events`).then(r => r.json()),
       authFetch(`${API_BASE}/ministries`).then(r => r.json()),
       authFetch(`${API_BASE}/tcd`).then(r => r.json()),
-    ]).then(([user, users, events, ministries, tcd]) => {
+      authFetch(`${API_BASE}/assignments`).then(r => r.json()).catch(() => []), // Fallback si no existe
+    ]).then(([user, users, events, ministries, tcd, assignments]) => {
       setAppData({
         user:       user.status       === 'fulfilled' ? user.value       : null,
         users:      users.status      === 'fulfilled'
@@ -68,6 +71,7 @@ const App = () => {
                       ? (Array.isArray(ministries.value) ? ministries.value : [])
                       : [],
         tcdEntries: tcd.status        === 'fulfilled' ? tcd.value        : [],
+        assignments: assignments.status === 'fulfilled' ? (Array.isArray(assignments.value) ? assignments.value : []) : [],
       });
       setLoading(false);
     });
@@ -99,10 +103,24 @@ const App = () => {
     setActiveTab('schedule');
   }, []);
 
+  const handleRemoveAssignment = useCallback((id) => {
+    setAppData(prev => ({
+      ...prev,
+      assignments: prev.assignments.filter(a => a.id !== id)
+    }));
+  }, []);
+
+  const handleRemoveMinistry = useCallback((id) => {
+    setAppData(prev => ({
+      ...prev,
+      ministries: prev.ministries.filter(m => m.id !== id)
+    }));
+  }, []);
+
   if (!authUser) return <Login />;
   if (loading)   return <AppLoader />;
 
-  const { user, users, tcdEntries, events, ministries } = appData;
+  const { user, users, tcdEntries, events, ministries, assignments } = appData;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -112,6 +130,9 @@ const App = () => {
         {activeTab === 'profile' && <Profile events={events} />}
         {activeTab === 'schedule' && (
           <ErrorBoundary><Schedule /></ErrorBoundary>
+        )}
+        {activeTab === 'service-search' && (
+          <ServiceSearch />
         )}
         {activeTab === 'users' && (
           <UsersManager
@@ -134,7 +155,11 @@ const App = () => {
           <MinistryManager
             ministries={ministries}
             users={users}
+            assignments={assignments}
             onAddEvent={handleAddEvent}
+            onRemoveAssignment={handleRemoveAssignment}
+            onRemoveMinistry={handleRemoveMinistry}
+            onAssignPerson={(a) => setAppData(prev => ({ ...prev, assignments: [...prev.assignments, a] }))}
           />
         )}
         {activeTab === 'contact' && <Contact />}
