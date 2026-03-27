@@ -3,6 +3,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 const API_MINISTRIES = 'https://anunciaig.com/api/ministries';
 const API_USERS      = 'https://anunciaig.com/api/users';
+const path      = 'http://localhost:5000/api';
+//const path      = 'https://anunciaig.com/api
+
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -60,15 +63,16 @@ function MinistryCard({ ministry, onRemove, onManage }) {
 
 // ─── Vista Detalle de Ministerio ──────────────────────────────────────────────
 
-function MinistryDetailsView({ ministry, assignments, users, onAssign, onRemoveMember, onBack }) {
-  const ministryAssignments = assignments.filter(a => a.ministryId === ministry.id);
+function MinistryDetailsView({ ministry, assignments, users, onAssign, onRemoveMember, onBack , onAddAssignment}) {
+ 
   const [usersByMInistry, setUsersByMInistry]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
 const activeMinistry = (ministry !== null) ? ministry : null;
 
   useEffect(() => {
-    fetch(`https://anunciaig.com/api/ministries/${ministry?.id}/personas`)
+    //fetch(`https://anunciaig.com/api/ministries/${ministry?.id}/personas`)
+    fetch(`${path}/ministries/${ministry?.id}/personas`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`Error al cargar el ministerio: ${response.statusText}`);
@@ -103,7 +107,8 @@ const activeMinistry = (ministry !== null) ? ministry : null;
             </div>
           </div>
           <button 
-            onClick={onAssign}
+            onClick={() => onAddAssignment(ministry)}
+
             className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2"
           >
             <i className="fas fa-user-plus"></i> Agregar Persona
@@ -125,7 +130,7 @@ const activeMinistry = (ministry !== null) ? ministry : null;
                 <div key={a.id} className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-indigo-200 transition-all group">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg">
-                      {a.userName?.charAt(0)}
+                      {a.nombre?.charAt(0) + ' ' + a.apellido?.charAt(0)}
                     </div>
                     <div>
                       <div className="font-bold text-slate-800">{a.nombre + ' ' + a.apellido}</div>
@@ -135,7 +140,7 @@ const activeMinistry = (ministry !== null) ? ministry : null;
                     </div>
                   </div>
                   <button 
-                    onClick={() => onRemoveMember(a.id)}
+                    onClick={() => onRemoveMember(ministry.id,a.id)}
                     className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                     title="Eliminar de ministerio"
                   >
@@ -216,7 +221,7 @@ function UserRow({ user, onToggleStatus }) {
 
 // ─── Formulario vincular servidor ────────────────────────────────────────────
 
-function AssignForm({ ministries, users, onSave, onCancel }) {
+function AssignForm({ ministries, users, onSave, onCancel,onAddMinistries,onAddPerson }) {
   const [form, setForm] = useState({ userId: '', ministryId: '', positionId: '' });
   const activeMinistry  = ministries.find(m => m.id === form.ministryId);
 
@@ -234,11 +239,11 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
 
   return (
     <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl animate-in fade-in zoom-in duration-300">
-      <h3 className="text-xl font-bold mb-6 text-slate-800">Vincular Servidor a Posición</h3>
+      <h3 className="text-xl font-bold mb-6 text-slate-800">Vincular Servidor al Ministerio</h3>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Servidor</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Servidor</label>            
             <select required
               className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none"
               value={form.userId} onChange={e => setForm({ ...form, userId: e.target.value })}
@@ -249,13 +254,9 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ministerio</label>
-            <select required
-              className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none"
-              value={form.ministryId} onChange={e => setForm({ ...form, ministryId: e.target.value, positionId: '' })}
-            >
-              <option value="">-- Seleccionar --</option>
-              {ministries.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-            </select>
+            <div>
+              <h2>{onAddMinistries.name}</h2>
+            </div>
           </div>
         </div>
 
@@ -279,9 +280,9 @@ function AssignForm({ ministries, users, onSave, onCancel }) {
 
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={onCancel} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl">Cancelar</button>
-          <button type="submit" disabled={!form.positionId}
+          <button type="submit" disabled={!form.userId} onClick={() => onAddPerson(onAddMinistries.id,form.userId)}
             className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-            Guardar Especialidad
+            Agregar Servidor
           </button>
         </div>
       </form>
@@ -489,11 +490,62 @@ const MinistryManager = ({ assignments = [], onAssignPerson, onAddEvent, onRemov
   const { authFetch } = useAuth();
   const [view, setView]           = useState('list'); // 'list' | 'create-schedule' | 'assign' | 'details'
   const [ministries, setMinistries] = useState([]);
+  const [addMinistries, setAadMinistries] = useState([]);
   const [users, setUsers]           = useState([]);
   const [usersByMInistry, setUsersByMInistry]           = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState(null);
   const [selectedMinId, setSelectedMinId] = useState(null);
+
+  const handleAddAssignment = (ministry) => {
+    setAadMinistries(ministry);
+    setView('assign');
+    console.log('Asignando persona al ministerio:', ministry.id);
+  }
+
+  const handleAddPerson = async (idMinisterio, uId) => {
+    
+    console.log('Agregando persona al ministerio:', { idPersona: uId, idMinisterio: idMinisterio });
+    try {
+      const res = await authFetch(`${path}/ministeries/addperson`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ idPersona: uId, idMinisterio: idMinisterio })
+      });
+
+      if (res.ok) {
+        // Handle successful addition
+      } else {
+        alert('Error: No se pudo agregar la persona al ministerio.');
+      }
+    } catch (err) {
+      console.error("Error adding person:", err);
+      alert('Error de conexión al intentar agregar.');
+    }
+  };
+
+
+  // Función para eliminar la asignación en el servidor y luego actualizar el estado local
+  const handleDeleteAssignment = async (mId,sId) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar a esta persona del ministerio?')) return;
+
+    try {
+      //const res = await authFetch(`https://anunciaig.com/api/ministeries/${mId}/personas/${sId}`, {
+      const res = await authFetch(`${path}/ministeries/${mId}/personas/${sId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        if (onRemoveAssignment) onRemoveAssignment(mId);
+      } else {
+        alert('Error: No se pudo eliminar la asignación en el servidor.');
+      }
+    } catch (err) {
+      console.error("Error deleting assignment:", err);
+      alert('Error de conexión al intentar eliminar.');
+    }
+  };
 
 
 
@@ -561,7 +613,8 @@ const MinistryManager = ({ assignments = [], onAssignPerson, onAddEvent, onRemov
           users={usersByMInistry}
           onBack={() => setView('list')}
           onAssign={() => setView('assign')}
-          onRemoveMember={onRemoveAssignment}
+          onRemoveMember={handleDeleteAssignment}
+          onAddAssignment={handleAddAssignment}
         />
       )}
 
@@ -587,7 +640,7 @@ const MinistryManager = ({ assignments = [], onAssignPerson, onAddEvent, onRemov
           </div>
           <SkillsPanel
             assignments={assignments}
-            onRemove={onRemoveAssignment}
+            onRemove={handleDeleteAssignment}
             onAddClick={() => setView('assign')}
           />
         </div>
@@ -598,6 +651,8 @@ const MinistryManager = ({ assignments = [], onAssignPerson, onAddEvent, onRemov
           ministries={ministries} users={users}
           onSave={(a) => { if (onAssignPerson) onAssignPerson(a); setView('list'); }}
           onCancel={() => setView('list')}
+          onAddMinistries={addMinistries}
+          onAddPerson={handleAddPerson}
         />
       )}
     </div>
