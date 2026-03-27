@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
+
+const path      = 'http://localhost:5000/api';
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────
 
@@ -16,22 +19,60 @@ function EmptyTCD() {
 
 // ─── Uploader ─────────────────────────────────────────────────────────────────
 
-function TCDUploader({ onUpload }) {
+function TCDUploader({ onUpload, currentUser }) {
+  const { authFetch } = useAuth();
   const [preview, setPreview] = useState(null);
+  const [file, setFile] = useState(null);         // ← guardamos el File real
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const selected = e.target.files[0];
+    if (!selected) return;
+
+    setFile(selected);                             // ← guardamos el File original
+
     const reader = new FileReader();
-    reader.onloadend = () => setPreview(reader.result);
-    reader.readAsDataURL(file);
+    reader.onloadend = () => setPreview(reader.result); // solo para preview
+    reader.readAsDataURL(selected);
   };
 
-  const handleUpload = () => {
-    if (!preview) return;
-    onUpload(preview);
+  const handleUpload = async () => {
+  if (!file) return;          // ✅ Validar primero
+  setLoading(true);           // ✅ Activar loading antes del fetch
+  setError(null);
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('idPersona', currentUser.id);
+
+    const res = await fetch(`${path}/upload`, {
+      method: 'POST',
+      // ✅ Sin Content-Type — el navegador lo pone automáticamente con el boundary
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error('Error al subir la imagen');
+
+    const imageUrl = await res.text();
+
+    onUpload({
+      userId:   currentUser.id,
+      userName: currentUser.name,
+      date:     new Date().toISOString().split('T')[0],
+      image:    imageUrl,
+    });
+
+    setFile(null);
     setPreview(null);
-  };
+
+  } catch (err) {
+    setError('No se pudo subir la imagen. Intenta de nuevo.');
+  } finally {
+    setLoading(false);        // ✅ Siempre se ejecuta
+  }
+};
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -54,21 +95,35 @@ function TCDUploader({ onUpload }) {
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
             <i className="fas fa-book-open text-indigo-300 mb-2 block"></i>
             <p className="text-sm text-indigo-700 italic">
-              Lámpara es a mis pies tu palabra, y lumbrera a mi camino.
+              prueba Lámpara es a mis pies tu palabra, y lumbrera a mi camino.
             </p>
             <p className="text-xs text-indigo-400 mt-1 font-bold">— Salmos 119:105</p>
           </div>
+
+          {/* Error */}
+          {error && (
+            <p className="text-red-500 text-sm text-center">{error}</p>
+          )}
+
           <button
-            disabled={!preview}
             onClick={handleUpload}
             className={`w-full py-3 rounded-xl font-bold transition-all ${
-              preview
+              file && !loading
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-0.5'
                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'
             }`}
           >
-            <i className="fas fa-upload mr-2"></i>
-            Subir TCD
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Subiendo...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-upload mr-2"></i>
+                Subir TCD
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -121,16 +176,8 @@ function DateRangeFilter({ range, onChange }) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 const TCDManager = ({ tcdEntries, onAddEntry, currentUser }) => {
+  const {  authUser } = useAuth();
   const [range, setRange] = useState({ start: '', end: '' });
-
-  const handleUpload = (image) => {
-    onAddEntry({
-      userId:   currentUser.id,
-      userName: currentUser.name,
-      date:     new Date().toISOString().split('T')[0],
-      image,
-    });
-  };
 
   const filtered = tcdEntries.filter(entry => {
     if (!range.start || !range.end) return true;
@@ -139,7 +186,8 @@ const TCDManager = ({ tcdEntries, onAddEntry, currentUser }) => {
 
   return (
     <div className="space-y-8">
-      <TCDUploader onUpload={handleUpload} />
+      {/* Le pasamos currentUser al uploader */}
+      <TCDUploader onUpload={onAddEntry} currentUser={authUser} />
 
       <div className="space-y-4">
         <div className="flex justify-between items-center flex-wrap gap-4">

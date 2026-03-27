@@ -638,11 +638,7 @@ const MinistryManager = ({ assignments = [], onAssignPerson, onAddEvent, onRemov
               ))
             )}
           </div>
-          <SkillsPanel
-            assignments={assignments}
-            onRemove={handleDeleteAssignment}
-            onAddClick={() => setView('assign')}
-          />
+        
         </div>
       )}
 
