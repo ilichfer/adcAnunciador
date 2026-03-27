@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
-const path      = 'http://localhost:5000/api';
+//const path      = 'http://localhost:5000/api';
+const path      = 'https://anunciaig.com/api';
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────
 

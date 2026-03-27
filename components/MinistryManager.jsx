@@ -3,8 +3,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 const API_MINISTRIES = 'https://anunciaig.com/api/ministries';
 const API_USERS      = 'https://anunciaig.com/api/users';
-const path      = 'http://localhost:5000/api';
-//const path      = 'https://anunciaig.com/api
+//const path      = 'http://localhost:5000/api';
+const path      = 'https://anunciaig.com/api';
 
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
