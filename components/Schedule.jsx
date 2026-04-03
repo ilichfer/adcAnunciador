@@ -186,12 +186,11 @@ function ScheduleView({ events }) {
               {/* Tarjetas de ministerios */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {(Array.isArray(event.ministries) ? event.ministries : []).map((minObj, mIdx) => {
-                  const minName = Object.keys(minObj)[0];
                   return (
                     <MinistryCard
-                      key={`${minName}-${mIdx}`}
-                      ministryName={minName}
-                      assignments={minObj[minName]}
+                      key={`${minObj.name}-${mIdx}`}
+                      ministryName={minObj.name}
+                      assignments={minObj.positions || []}
                     />
                   );
                 })}

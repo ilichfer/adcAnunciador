@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useAppStore } from '../store/UseAppStore.jsx';
 
 const API_URL = 'https://anunciaig.com/api/users';
 
@@ -44,7 +45,6 @@ function UserRow({ user, onToggleStatus }) {
     <tr className={`${user.active ? 'hover:bg-slate-50/50' : 'bg-slate-50 opacity-60'} transition-colors`}>
       <td className="px-6 py-4">
         <div className="flex items-center space-x-3">
-          {/* Avatar con iniciales si no hay imagen */}
           {user.avatar ? (
             <img
               src={user.avatar}
@@ -151,15 +151,27 @@ function AddUserForm({ onSave, onCancel }) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-const UsersManager = ({ onAddUser, onToggleStatus }) => {
+const UsersManager = () => {
   const { authFetch } = useAuth();
-  const [users, setUsers]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+
+  // ── Store: leer y escribir ──────────────────────────────────────────────────
+  const users            = useAppStore(s => s.users);
+  const setUsers         = useAppStore(s => s.setUsers);
+  const addUser          = useAppStore(s => s.addUser);
+  const toggleUserStatus = useAppStore(s => s.toggleUserStatus);
+
+  // ── Estado local: solo UI ───────────────────────────────────────────────────
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Fetch directo al endpoint
+  // Fetch inicial: solo si el store está vacío para no repetir la llamada
   useEffect(() => {
+    if (users.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     authFetch(API_URL)
       .then(res => {
@@ -168,6 +180,7 @@ const UsersManager = ({ onAddUser, onToggleStatus }) => {
       })
       .then(data => {
         const lista = Array.isArray(data) ? data : data.users ?? [];
+        // Carga masiva en el store preservando los IDs reales de la API
         setUsers(lista);
         setLoading(false);
       })
@@ -178,14 +191,12 @@ const UsersManager = ({ onAddUser, onToggleStatus }) => {
   }, []);
 
   const handleToggle = (id) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, active: !u.active } : u));
-    if (onToggleStatus) onToggleStatus(id);
+    toggleUserStatus(id); // actualiza el store (y todo componente que lo use)
   };
 
   const handleAdd = (newUser) => {
-    setUsers(prev => [...prev, { ...newUser, id: Date.now(), active: true }]);
+    addUser(newUser);     // agrega al store
     setShowForm(false);
-    if (onAddUser) onAddUser(newUser);
   };
 
   const activeCount   = users.filter(u => u.active).length;

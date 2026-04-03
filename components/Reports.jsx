@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 
-//const path      = 'http://localhost:5000/api';
-const path      = 'https://anunciaig.com/api';
+// Reports NO necesita datos del store: hace su propio fetch al endpoint
+// /api/scheduleByDate con un rango de fechas. Se mantiene igual al original.
+
+const path = 'https://anunciaig.com/api';
 
 // ─── Estado: pide rango ───────────────────────────────────────────────────────
 
@@ -36,20 +38,18 @@ function ReportsEmpty() {
 function ReportRow({ item, maxCount }) {
   const pct = maxCount > 0 ? Math.round((item.cantidadEntregados / maxCount) * 100) : 0;
   const badge =
-    item.cantidadEntregados === 0  ? { label: 'Sin registros', cls: 'bg-rose-100 text-rose-600' }
-    : item.cantidadEntregados >= 5 ? { label: 'Excelente',     cls: 'bg-emerald-100 text-emerald-700' }
-    : item.cantidadEntregados >= 3 ? { label: 'Regular',        cls: 'bg-amber-100 text-amber-700' }
-    :                                { label: 'Bajo',            cls: 'bg-rose-100 text-rose-600' };
+    item.cantidadEntregados === 0 ? { label: 'Sin registros', cls: 'bg-rose-100 text-rose-600' }
+      : item.cantidadEntregados >= 5 ? { label: 'Excelente', cls: 'bg-emerald-100 text-emerald-700' }
+        : item.cantidadEntregados >= 3 ? { label: 'Regular', cls: 'bg-amber-100 text-amber-700' }
+          : { label: 'Bajo', cls: 'bg-rose-100 text-rose-600' };
 
   return (
     <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all group">
-      {/* Inicial del nombre como avatar */}
       <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 border border-indigo-200">
         <span className="text-indigo-600 font-bold text-sm">
           {item.nombre.charAt(0).toUpperCase()}
         </span>
       </div>
-
       <div className="flex-grow min-w-0">
         <div className="flex items-center justify-between mb-1">
           <span className="font-bold text-slate-800 truncate capitalize">{item.nombre}</span>
@@ -57,7 +57,6 @@ function ReportRow({ item, maxCount }) {
             {badge.label}
           </span>
         </div>
-        {/* Barra de progreso */}
         <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-indigo-500 rounded-full transition-all duration-700 group-hover:bg-indigo-600"
@@ -65,7 +64,6 @@ function ReportRow({ item, maxCount }) {
           />
         </div>
       </div>
-
       <div className="text-right flex-shrink-0">
         <div className="text-2xl font-black text-indigo-600">{item.cantidadEntregados}</div>
         <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">subidas</div>
@@ -93,36 +91,23 @@ const Reports = () => {
     async function fetchReport() {
       setLoading(true);
       setError(null);
-
       try {
         const res = await fetch(`${path}/scheduleByDate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(range),
         });
-
         const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(data.message || 'Error al obtener el reporte');
-        }
-
-        if (!cancelled) {
-          setReportData(Array.isArray(data) ? data : []);
-        }
+        if (!res.ok) throw new Error(data.message || 'Error al obtener el reporte');
+        if (!cancelled) setReportData(Array.isArray(data) ? data : []);
       } catch (err) {
-        if (!cancelled) {
-          console.error('Error fetching report:', err);
-          setError(err.message);
-          setReportData(null);
-        }
+        if (!cancelled) { setError(err.message); setReportData(null); }
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
     fetchReport();
-
     return () => { cancelled = true; };
   }, [range.fechaInicio, range.fechaFin]);
 
@@ -143,8 +128,6 @@ const Reports = () => {
               </p>
             )}
           </div>
-
-          {/* Filtro de rango */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="space-y-0.5">
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Desde</label>
@@ -167,14 +150,12 @@ const Reports = () => {
           </div>
         </div>
 
-        {/* Banner de error */}
         {error && (
           <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-600">
             <i className="fas fa-exclamation-circle mr-2"></i>{error}
           </div>
         )}
 
-        {/* Contenido */}
         {loading ? (
           <div className="text-center py-14 text-slate-400">
             <i className="fas fa-spinner fa-spin text-2xl mb-3 block text-indigo-400"></i>
