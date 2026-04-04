@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
 
-const API_SCHEDULE = 'http://localhost:8080/api/schedule/persona';
+const API_SCHEDULE = 'https://anunciaig.com/api/schedule/persona';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -223,7 +223,7 @@ const Profile = () => {
     } else {
       // Fallback: carga individual si el store aún no tiene datos
       setLoading(true);
-      fetch('http://localhost:8080/api/user', {
+      fetch('https://anunciaig.com/api/user', {
         headers: { Authorization: `Bearer ${authUser.token}` },
       })
         .then(r => r.ok ? r.json() : Promise.reject())

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
 
-const API_MINISTRIES = 'http://localhost:8080/api/ministries';
-const API_USERS      = 'http://localhost:8080/api/users';
-const path           = 'http://localhost:8080/api';
+const API_MINISTRIES = 'https://anunciaig.com/api/ministries';
+const API_USERS      = 'https://anunciaig.com/api/users';
+const path           = 'https://anunciaig.com/api';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -216,7 +216,7 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
   useEffect(() => {
     if (!activeMinistry?.id) return;
     setLoading(true);
-    fetch(`http://localhost:8080/api/ministries/${activeMinistry.id}/personas`)
+    fetch(`https://anunciaig.com/api/ministries/${activeMinistry.id}/personas`)
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(json => setUsersMin(json))
       .catch(() => setUsersMin([]))

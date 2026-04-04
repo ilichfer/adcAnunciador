@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
 
-const API_URL = 'http://localhost:8080/api/users';
+const API_URL = 'https://anunciaig.com/api/users';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 

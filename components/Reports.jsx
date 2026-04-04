@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Reports NO necesita datos del store: hace su propio fetch al endpoint
 // /api/scheduleByDate con un rango de fechas. Se mantiene igual al original.
 
-const path = 'http://localhost:8080/api';
+const path = 'https://anunciaig.com/api';
 
 // ─── Estado: pide rango ───────────────────────────────────────────────────────
 

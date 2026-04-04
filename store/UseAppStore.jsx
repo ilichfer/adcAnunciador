@@ -20,7 +20,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'https://anunciaig.com/api';
 //const API_BASE = 'http://localhost:5000/api';
 
 // ---------------------------------------------------------------------------
