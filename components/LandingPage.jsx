@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 
 const LandingPage = ({ onLoginClick }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const slides = [
     { url: '/img/unidos.jpeg',           title: 'Unidos 2026',           desc: 'Caminando juntos en fe.' },
@@ -43,14 +42,6 @@ const LandingPage = ({ onLoginClick }) => {
             <span className="font-black text-lg tracking-tighter uppercase">Anunciadores de Cristo</span>
           </div>
           
-          {/* Botón Hamburguesa para Móvil */}
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-slate-300 hover:text-white transition-colors"
-          >
-            <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
-          </button>
-
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map(link => (
               <a key={link.label} href={link.href} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">
@@ -66,30 +57,6 @@ const LandingPage = ({ onLoginClick }) => {
           </div>
         </div>
       </nav>
-
-      {/* --- Menú Dropdown Móvil --- */}
-      <div className={`md:hidden bg-slate-900 border-t border-slate-800 transition-all duration-300 ease-in-out overflow-hidden sticky top-16 z-[90] ${
-        isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-      }`}>
-        <div className="px-4 py-6 flex flex-col gap-4">
-          {navLinks.map(link => (
-            <a 
-              key={link.label} 
-              href={link.href} 
-              onClick={() => setIsMenuOpen(false)}
-              className="text-sm font-bold text-slate-300 hover:text-white border-b border-white/5 pb-2"
-            >
-              {link.label}
-            </a>
-          ))}
-          <button 
-            onClick={() => { onLoginClick(); setIsMenuOpen(false); }}
-            className="bg-indigo-600 hover:bg-indigo-700 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-white"
-          >
-            LogIn
-          </button>
-        </div>
-      </div>
 
       {/* --- Carrusel / Hero --- */}
       <div className="relative h-[400px] md:h-[600px] overflow-hidden group">
