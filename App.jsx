@@ -2,7 +2,7 @@
 // ADMIN   → ve todas las vistas
 // SERVIDOR → solo profile, schedule, tcd, reports
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar          from './components/Navbar.jsx';
 import Header          from './components/Header.jsx';
 import Profile         from './components/Profile.jsx';
@@ -15,6 +15,7 @@ import MinistryManager from './components/MinistryManager.jsx';
 import ServiceSearch   from './components/ServiceSearch.jsx';
 import Contact         from './components/Contact.jsx';
 import Login           from './components/Login.jsx';
+import LandingPage     from './components/LandingPage.jsx';
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
 
@@ -48,6 +49,7 @@ const SERVER_TABS = new Set(['profile', 'schedule', 'tcd']); // 'reports' solo A
 
 const App = () => {
   const { authUser, logout, isAdmin } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
 
   const activeTab    = useAppStore(s => s.activeTab);
   const setActiveTab = useAppStore(s => s.setActiveTab);
@@ -75,9 +77,15 @@ const App = () => {
   const handleLogout = () => {
     logout();
     resetAppData();
+    setShowLogin(false); // Al cerrar sesión, vuelve a la LandingPage
   };
 
-  if (!authUser) return <Login />;
+  if (!authUser) {
+    if (showLogin) {
+      return <Login onBack={() => setShowLogin(false)} />;
+    }
+    return <LandingPage onLoginClick={() => setShowLogin(true)} />;
+  }
   if (loading)   return <AppLoader />;
 
   const canView   = (tab) => allowedTabs.has(tab);

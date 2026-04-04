@@ -1,0 +1,251 @@
+import { useState, useEffect } from 'react';
+
+const LandingPage = ({ onLoginClick }) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    { url: '/img/unidos.jpeg',           title: 'Unidos 2026',           desc: 'Caminando juntos en fe.' },
+    { url: '/img/oracion_matutina.jpeg',  title: 'Oración Matutina',      desc: 'Buscando su presencia al amanecer.' },
+    { url: '/img/24_horas.jpeg',         title: 'Oración 24 Horas',      desc: 'Intercesión sin cesar.' },
+    { url: '/img/estacion_generocidad.jpeg', title: 'Estación Generosidad', desc: 'Compartiendo amor y bendición.' },
+    { url: '/img/noches_adoracion.jpeg', title: 'Noches de Adoración',   desc: 'Exaltando al Rey de Reyes.' },
+    { url: '/img/reunion_familiar.jpeg', title: 'Reunión Familiar',     desc: 'Un lugar para todos.' },
+    { url: '/img/nuestras_reuniones.jpeg', title: 'Nuestras Reuniones',   desc: 'Ven y forma parte.' },
+  ];
+
+  // Auto-carrusel cada 5 segundos
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const navLinks = [
+    { label: 'Inicio',    href: '#inicio' },
+    { label: 'Servicios', href: '#servicios' },
+    { label: 'Videos',    href: '#videos' },
+    { label: 'Eventos',   href: '#eventos' },
+    { label: 'Contacto',  href: '#contacto' },
+  ];
+
+  return (
+    <div className="bg-white min-h-screen font-sans text-slate-800" id="inicio">
+      
+      {/* --- Navbar Público --- */}
+      <nav className="bg-slate-900 text-white sticky top-0 z-[100] shadow-xl">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <i className="fas fa-church text-sm"></i>
+            </div>
+            <span className="font-black text-lg tracking-tighter uppercase">Anunciadores de Cristo</span>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-6">
+            {navLinks.map(link => (
+              <a key={link.label} href={link.href} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">
+                {link.label}
+              </a>
+            ))}
+            <button 
+              onClick={onLoginClick}
+              className="bg-indigo-600 hover:bg-indigo-700 px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+            >
+              LogIn
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* --- Carrusel / Hero --- */}
+      <div className="relative h-[400px] md:h-[600px] overflow-hidden group">
+        {slides.map((slide, idx) => (
+          <div 
+            key={idx}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+          >
+            <div className="absolute inset-0 bg-black/40 z-10" />
+            <img src={slide.url} className="w-full h-full object-cover" alt={slide.title} />
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white p-4">
+              <h2 className="text-4xl md:text-6xl font-black mb-4 drop-shadow-lg text-center">{slide.title}</h2>
+              <p className="text-lg md:text-xl font-medium drop-shadow-md text-center">{slide.desc}</p>
+            </div>
+          </div>
+        ))}
+        
+        {/* Controles Carrusel */}
+        <button 
+          onClick={() => setCurrentSlide((currentSlide - 1 + slides.length) % slides.length)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white opacity-0 group-hover:opacity-100 transition-all"
+        >
+          <i className="fas fa-chevron-left"></i>
+        </button>
+        <button 
+          onClick={() => setCurrentSlide((currentSlide + 1) % slides.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white opacity-0 group-hover:opacity-100 transition-all"
+        >
+          <i className="fas fa-chevron-right"></i>
+        </button>
+      </div>
+
+      {/* --- Sección Servicios --- */}
+      <section id="servicios" className="py-20 max-w-6xl mx-auto px-4 text-center">
+        <h2 className="text-3xl font-black mb-2 uppercase tracking-tight">Nuestros Servicios</h2>
+        <div className="w-16 h-1.5 bg-indigo-600 mx-auto mb-6 rounded-full" />
+        <p className="text-slate-500 mb-12 max-w-2xl mx-auto font-medium">Únete a nuestras reuniones y experiencias espirituales.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 hover:shadow-xl transition-all">
+            <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <i className="fas fa-sun text-2xl"></i>
+            </div>
+            <h4 className="text-xl font-bold mb-2">Reunión Dominical</h4>
+            <p className="text-indigo-600 font-black uppercase text-sm tracking-widest">Domingos — 10:00 AM</p>
+          </div>
+          <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 hover:shadow-xl transition-all">
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <i className="fas fa-pray text-2xl"></i>
+            </div>
+            <h4 className="text-xl font-bold mb-2">Reunión de Oración y Alabanza</h4>
+            <p className="text-emerald-600 font-black uppercase text-sm tracking-widest">Viernes — 7:00 PM</p>
+          </div>
+        </div>
+      </section>
+
+      {/* --- Sección Videos --- */}
+      <section id="videos" className="py-20 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-black mb-2 uppercase tracking-tight">Videos Destacados</h2>
+          <div className="w-16 h-1.5 bg-rose-600 mx-auto mb-12 rounded-full" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              "https://www.youtube.com/embed/Q1I2YKVahI0",
+              "https://www.youtube.com/embed/E0WWa1g6TIY",
+              "https://www.youtube.com/embed/ehmOQBheuEo"
+            ].map((url, idx) => (
+              <div key={idx} className="aspect-video rounded-2xl overflow-hidden shadow-lg border-4 border-white">
+                <iframe 
+                  src={url}
+                  className="w-full h-full"
+                  title={`Video ${idx}`}
+                  allowFullScreen 
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- Sección Eventos --- */}
+      <section id="eventos" className="py-20 max-w-6xl mx-auto px-4 text-center">
+        <h2 className="text-3xl font-black mb-2 uppercase tracking-tight">Próximos Eventos</h2>
+        <div className="w-16 h-1.5 bg-amber-500 mx-auto mb-6 rounded-full" />
+        <p className="text-slate-500 mb-12 font-medium">Descubre lo que Dios tiene preparado para ti.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex items-center gap-6 p-6 bg-white border border-slate-200 rounded-3xl text-left hover:border-amber-500 transition-colors shadow-sm">
+            <div className="bg-amber-100 text-amber-600 w-20 h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0">
+              <span className="text-2xl font-black">16</span>
+              <span className="text-[10px] font-bold uppercase">ENE</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-xl">Congreso 2026</h4>
+              <p className="text-slate-400 text-sm">3 días de renovación espiritual.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6 p-6 bg-white border border-slate-200 rounded-3xl text-left hover:border-amber-500 transition-colors shadow-sm">
+            <div className="bg-amber-100 text-amber-600 w-20 h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0">
+              <span className="text-2xl font-black">15</span>
+              <span className="text-[10px] font-bold uppercase">AGO</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-xl">Conferencia de Hombres</h4>
+              <p className="text-slate-400 text-sm">ADC Central — Edificando vidas.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- Sección Contacto --- */}
+      <section id="contacto" className="py-20 bg-slate-900 text-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            {/* Formulario */}
+            <div className="text-left space-y-8">
+              <div>
+                <h2 className="text-3xl font-black uppercase tracking-tight">Contacto</h2>
+                <p className="text-slate-400 mt-2">¡Nos encantaría conocerte! Escríbenos.</p>
+              </div>
+              
+              <form className="space-y-4" onSubmit={e => e.preventDefault()}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input type="text" placeholder="Tu Nombre" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
+                  <input type="email" placeholder="Tu Correo" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
+                </div>
+                <textarea rows="4" placeholder="Tu Mensaje" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500 resize-none"></textarea>
+                <button className="bg-indigo-600 hover:bg-indigo-700 px-10 py-4 rounded-2xl font-black uppercase tracking-widest w-full md:w-auto transition-all">
+                  Enviar Mensaje
+                </button>
+              </form>
+            </div>
+
+            {/* Mapa */}
+            <div className="rounded-3xl overflow-hidden shadow-2xl h-[400px] border-4 border-white/10">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3977.1102516141086!2d-74.09897119046833!3d4.574210942724055!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f98e9172029a9%3A0x2ab065ee2c7bcfbe!2sIglesia%20Cristiana%20Anunciadores%20de%20Cristo!5e0!3m2!1ses!2sco!4v1739454659848!5m2!1ses!2sco"
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen="" 
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- Footer --- */}
+      <footer className="bg-black text-white py-12 px-4 border-t border-white/5">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="text-center md:text-left">
+            <p className="font-black uppercase tracking-widest text-sm">Anunciadores de Cristo</p>
+            <p className="text-slate-500 text-xs mt-1">© 2026 Todos los derechos reservados.</p>
+          </div>
+          
+          <div className="flex gap-4">
+            <a 
+              href="https://www.facebook.com/IgAnunciadoresCristo" 
+              target="_blank" 
+              rel="noreferrer"
+              className="w-12 h-12 bg-white/5 hover:bg-indigo-600 rounded-full flex items-center justify-center transition-all group"
+            >
+              <i className="fab fa-facebook-f group-hover:scale-110"></i>
+            </a>
+            <a 
+              href="https://www.instagram.com/anunciadores.de.cristo" 
+              target="_blank" 
+              rel="noreferrer"
+              className="w-12 h-12 bg-white/5 hover:bg-rose-600 rounded-full flex items-center justify-center transition-all group"
+            >
+              <i className="fab fa-instagram group-hover:scale-110"></i>
+            </a>
+            <a 
+              href="https://www.youtube.com/@iganunciadorescristocentral" 
+              target="_blank" 
+              rel="noreferrer"
+              className="w-12 h-12 bg-white/5 hover:bg-rose-700 rounded-full flex items-center justify-center transition-all group"
+            >
+              <i className="fab fa-youtube group-hover:scale-110"></i>
+            </a>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+};
+
+export default LandingPage;

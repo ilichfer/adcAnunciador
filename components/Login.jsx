@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
-const Login = () => {
+const Login = ({ onBack }) => {
   const { login } = useAuth();
   const [form, setForm]         = useState({ cedula: '', password: '' });
   const [loading, setLoading]   = useState(false);
@@ -53,6 +53,15 @@ const Login = () => {
         </div>
 
         <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8">
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="mb-4 text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors group"
+            >
+              <i className="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+              Volver al portal
+            </button>
+          )}
           <h2 className="text-xl font-bold text-slate-800 mb-1">Iniciar sesión</h2>
           <p className="text-slate-400 text-sm mb-8">Ingresa tus credenciales para continuar</p>
 
