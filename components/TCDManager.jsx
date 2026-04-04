@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
 
-const path = 'https://anunciaig.com/api';
+const path = 'http://localhost:8080/api';
 //const path = 'http://localhost:5000/api';
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────

@@ -19,7 +19,7 @@ const Login = ({ onBack }) => {
     setError(null);
 
     try {
-      const res = await fetch('http://localhost:8080/anunciadores-0.0.1-SNAPSHOT/api/auth/loginReact', {
+      const res = await fetch('http://localhost:8080/api/auth/loginReact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

@@ -211,7 +211,7 @@ function Schedule() {
   const [error, setError]   = useState(null);
 
   useEffect(() => {
-    fetch('https://anunciaig.com/api/events')
+    fetch('http://localhost:8080/api/events')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
