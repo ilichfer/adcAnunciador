@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
-
-const path = 'https://anunciaig.com/api';
-//const path = 'http://localhost:5000/api';
+import { useApi } from '../components/useApi.js';
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────
 
@@ -26,6 +24,7 @@ function TCDUploader({ onUpload, currentUser }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { getUrl } = useApi();
 
   const handleFile = (e) => {
     const selected = e.target.files[0];
@@ -44,7 +43,7 @@ function TCDUploader({ onUpload, currentUser }) {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('idPersona', currentUser.id);
-      const res = await fetch(`${path}/upload`, { method: 'POST', body: formData });
+      const res = await fetch(getUrl('/upload'), { method: 'POST', body: formData });
       if (!res.ok) throw new Error('Error al subir la imagen');
       const imageUrl = await res.text();
       onUpload({
@@ -132,7 +131,8 @@ function TCDCard({ entry }) {
 
 const TCDManager = () => {
   const { authUser, authFetch } = useAuth();
-  const [tdcCount, setTdcCount] = useState({});
+  const { getUrl } = useApi();
+  const [tdcCount, setTdcCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [scheduleError, setSchError] = useState(false);
 
@@ -153,7 +153,7 @@ const TCDManager = () => {
   useEffect(() => {
     if (!authUser?.id) return;
     setLoading(true);
-    authFetch(`${path}/tdcbyPerson/${authUser.id}`)
+    authFetch(getUrl(`/tdcbyPerson/${authUser.id}`))
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(json => { setTdcCount(json); setSchError(false); })
       .catch(() => setSchError(true))
@@ -216,7 +216,7 @@ const TCDManager = () => {
 
         </div>
 
-        {tdcCount.length === 0 ? (
+        {filtered.length === 0 ? (
           <EmptyTCD />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

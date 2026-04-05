@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useApi } from '../components/useApi.js';
 
 const Login = ({ onBack }) => {
   const { login } = useAuth();
+  const { getUrl } = useApi();
   const [form, setForm]         = useState({ cedula: '', password: '' });
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
@@ -19,7 +21,7 @@ const Login = ({ onBack }) => {
     setError(null);
 
     try {
-      const res = await fetch('https://anunciaig.com/api/auth/loginReact', {
+      const res = await fetch(getUrl('/auth/loginReact'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

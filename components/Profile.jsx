@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
-
-const API_SCHEDULE = 'https://anunciaig.com/api/schedule/persona';
+import { useApi } from '../components/useApi.js';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -201,7 +200,8 @@ function ProfileView({ user, schedule, scheduleLoading, scheduleError }) {
 // ─── Componente raíz ──────────────────────────────────────────────────────────
 
 const Profile = () => {
-  const { authUser } = useAuth();
+  const { authUser, authFetch } = useAuth();
+  const { getUrl } = useApi();
 
   // ── Store: reutiliza el perfil ya cargado en fetchAppData ─────────────────
   const storeUser = useAppStore(s => s.user);
@@ -223,9 +223,7 @@ const Profile = () => {
     } else {
       // Fallback: carga individual si el store aún no tiene datos
       setLoading(true);
-      fetch('https://anunciaig.com/api/user', {
-        headers: { Authorization: `Bearer ${authUser.token}` },
-      })
+      authFetch(getUrl('/user'))
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => setUser(data))
         .catch(() => setUser({
@@ -241,7 +239,7 @@ const Profile = () => {
   useEffect(() => {
     if (!authUser?.id) return;
     setSchLoading(true);
-    fetch(`${API_SCHEDULE}/${authUser.id}`)
+    fetch(getUrl(`/schedule/persona/${authUser.id}`))
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(json => { setSchedule(Array.isArray(json) ? json : []); setSchError(false); })
       .catch(() => setSchError(true))

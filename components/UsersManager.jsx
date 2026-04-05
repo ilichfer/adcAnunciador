@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
-
-const API_URL = 'https://anunciaig.com/api/users';
+import { useApi } from '../components/useApi.js';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -153,6 +152,7 @@ function AddUserForm({ onSave, onCancel }) {
 
 const UsersManager = () => {
   const { authFetch } = useAuth();
+  const { getUrl } = useApi();
 
   // ── Store: leer y escribir ──────────────────────────────────────────────────
   const users            = useAppStore(s => s.users);
@@ -173,7 +173,7 @@ const UsersManager = () => {
     }
 
     setLoading(true);
-    authFetch(API_URL)
+    authFetch(getUrl('/users'))
       .then(res => {
         if (!res.ok) throw new Error(`Error ${res.status}`);
         return res.json();

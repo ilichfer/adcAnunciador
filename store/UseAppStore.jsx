@@ -19,9 +19,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-
-const API_BASE = 'https://anunciaig.com/api';
-//const API_BASE = 'http://localhost:5000/api';
+import { API_BASE } from '../components/useApi.js';
 
 // ---------------------------------------------------------------------------
 // Helper: construir headers con el token Bearer
@@ -100,12 +98,12 @@ export const useAppStore = create(
 
         const [user, users, events, ministries, tcd, assignments] =
           await Promise.allSettled([
-            fetch(`${API_BASE}/user`,        { headers }).then(safeJson),
-            fetch(`${API_BASE}/users`,       { headers }).then(safeJson),
-            fetch(`${API_BASE}/events`,      { headers }).then(safeJson),
-            fetch(`${API_BASE}/ministries`,  { headers }).then(safeJson),
-            fetch(`${API_BASE}/tcd`,         { headers }).then(safeJson),
-            fetch(`${API_BASE}/assignments`, { headers }).then(safeJson).catch(() => []),
+            fetch(`${API_BASE}/user`,        { headers }).then(safeJson), // Perfil actual
+            fetch(`${API_BASE}/users`,       { headers }).then(safeJson), // Lista de servidores
+            fetch(`${API_BASE}/events`,      { headers }).then(safeJson), // Agenda
+            fetch(`${API_BASE}/ministries`,  { headers }).then(safeJson), // Estructura
+            fetch(`${API_BASE}/tcd`,         { headers }).then(safeJson), // Galería TCD
+            fetch(`${API_BASE}/assignments`, { headers }).then(safeJson).catch(() => []), // Especialidades
           ]);
 
         set(

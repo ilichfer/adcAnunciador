@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-
-const API_BASE = 'https://anunciaig.com/api';
-//const API_BASE = 'http://localhost:5000/api';
+import { useApi } from '../components/useApi.js';
 
 // ─── Colores por ministerio (cíclico) ─────────────────────────────────────────
 const COLORS = [
@@ -73,6 +71,7 @@ function MinistryCard({ ministry, colorIndex, onEdit }) {
 
 function MinistryEditor({ ministry, date, onBack, onSaved }) {
   const { authFetch } = useAuth();
+  const { getUrl } = useApi();
   const c             = color(ministry.colorIndex);
 
   // ── Carga de datos ─────────────────────────────────────────────────────────
@@ -106,11 +105,11 @@ function MinistryEditor({ ministry, date, onBack, onSaved }) {
 
     Promise.all([
       // 1. Posiciones del ministerio (estructura con las posiciones asignadas en el servicio)
-      authFetch(`${API_BASE}/ministries/${ministry.id}`)
+      authFetch(getUrl(`/ministries/${ministry.id}`))
         .then(r => { if (!r.ok) throw new Error(`Error cargando ministerio: ${r.status}`); return r.json(); }),
 
       // 2. Personas vinculadas a este ministerio
-      fetch(`${API_BASE}/ministries/${ministry.id}/personas`)
+      fetch(getUrl(`/ministries/${ministry.id}/personas`))
         .then(r => { if (!r.ok) throw new Error(`Error cargando personas: ${r.status}`); return r.json(); }),
     ])
       .then(([ministerioData, personasData]) => {
@@ -178,7 +177,7 @@ function MinistryEditor({ ministry, date, onBack, onSaved }) {
     };
 
     try {
-      const res = await authFetch(`${API_BASE}/updateprog`, {
+      const res = await authFetch(getUrl('/updateprog'), {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -442,6 +441,7 @@ function Empty({ date }) {
 
 function ServiceSearch() {
   const { authFetch }  = useAuth();
+  const { getUrl } = useApi();
   const [selectedDate, setSelectedDate] = useState('');
   const [service,      setService]      = useState(null);
   const [notFound,     setNotFound]     = useState(false);
@@ -455,7 +455,7 @@ function ServiceSearch() {
     setNotFound(false);
     setError(null);
 
-    authFetch(`${API_BASE}/findprog?date=${date}`)
+    authFetch(getUrl(`/findprog?date=${date}`))
       .then(res => {
         if (res.status === 404) { setNotFound(true); return null; }
         if (!res.ok) throw new Error(`Error ${res.status}`);
