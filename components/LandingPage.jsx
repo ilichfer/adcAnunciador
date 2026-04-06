@@ -1,17 +1,144 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+
+// ─── Servicio de imágenes ─────────────────────────────────────────────────────
+//
+// Las fotos TCD se almacenan en tu backend. Para mostrarlas en la landing
+// sin que se descarguen directo desde el servidor, tienes tres opciones:
+//
+//  OPCIÓN A — Cloudflare Images (recomendada, gratis hasta 100k imágenes/mes)
+//    1. Crea cuenta en dash.cloudflare.com → Images
+//    2. Sube las imágenes o activa "Direct Creator Upload" desde tu API
+//    3. La URL pública queda: https://imagedelivery.net/<accountHash>/<imageId>/public
+//    4. Puedes agregar variantes: /thumbnail (200x200), /card (800x600), etc.
+//    Ventaja: CDN global, transformaciones on-the-fly, sin costo de egreso.
+//
+//  OPCIÓN B — Cloudinary (gratis 25GB almacenamiento / 25GB ancho de banda/mes)
+//    URL: https://res.cloudinary.com/<cloud_name>/image/upload/w_400,q_auto,f_auto/<public_id>
+//    Con transformaciones inline: redimensiona, comprime y convierte a WebP automático.
+//
+//  OPCIÓN C — imgix + cualquier bucket S3/R2 (gratis 1000 req/día)
+//    URL: https://<subdominio>.imgix.net/<ruta>?w=400&auto=format&q=75
+//
+// En todos los casos el frontend recibe UNA URL ya optimizada: no descarga
+// el original de tu servidor, sino la versión comprimida del CDN.
+//
+// Por ahora el fetch trae las URLs directamente del endpoint existente.
+// Cuando integres un CDN, solo cambia la función `buildImageUrl` abajo.
+
+function TCDGallery({ isVisible }) {
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPan, setStartPan] = useState({ x: 0, y: 0 });
+
+  if (!isVisible) return null;
+
+  // Iniciar el arrastre (solo si hay zoom)
+  const handleMouseDown = (e) => {
+    if (scale === 1) return;
+    setIsDragging(true);
+    setStartPan({ 
+      x: e.clientX - position.x, 
+      y: e.clientY - position.y 
+    });
+  };
+
+  // Actualizar posición mientras se arrastra
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - startPan.x,
+      y: e.clientY - startPan.y,
+    });
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  // Control manual de zoom
+  const handleZoom = (delta) => {
+    setScale((prev) => {
+      const newScale = Math.min(Math.max(1, prev + delta), 4);
+      // Si volvemos al tamaño original, centramos la imagen
+      if (newScale === 1) setPosition({ x: 0, y: 0 });
+      return newScale;
+    });
+  };
+
+  return (
+    <div className="animate-in fade-in zoom-in duration-700">
+      <div 
+        className={`relative inline-block overflow-hidden rounded-3xl border-8 border-white shadow-2xl bg-slate-50 ${scale > 1 ? 'cursor-move' : 'cursor-default'}`}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <img
+          src="https://pub-becb4bed35ee4164bb962059a8a24532.r2.dev/tdcMensual.jpeg"
+          alt="Reporte TCD Mensual"
+          className="max-w-full h-auto block select-none pointer-events-none transition-transform duration-200 ease-out origin-center"
+          style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }}
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
+        />
+
+        {/* Capa protectora para evitar clic derecho y arrastre */}
+        <div 
+          className="absolute inset-0 z-10"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onContextMenu={(e) => e.preventDefault()}
+        ></div>
+
+        {/* Controles Flotantes */}
+        <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2">
+          <button 
+            onClick={() => handleZoom(0.5)}
+            className="w-10 h-10 bg-white/90 backdrop-blur border border-slate-200 rounded-full shadow-lg flex items-center justify-center text-indigo-600 hover:bg-indigo-50 transition-colors"
+            title="Acercar"
+          >
+            <i className="fas fa-search-plus"></i>
+          </button>
+          <button 
+            onClick={() => handleZoom(-0.5)}
+            className="w-10 h-10 bg-white/90 backdrop-blur border border-slate-200 rounded-full shadow-lg flex items-center justify-center text-indigo-600 hover:bg-indigo-50 transition-colors"
+            title="Alejar"
+          >
+            <i className="fas fa-search-minus"></i>
+          </button>
+          <button 
+            onClick={() => { setScale(1); setPosition({x:0, y:0}); }}
+            className="w-10 h-10 bg-white/90 backdrop-blur border border-slate-200 rounded-full shadow-lg flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors"
+            title="Restablecer"
+          >
+            <i className="fas fa-compress-arrows-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-col items-center gap-2">
+        <span className="text-xs font-black text-indigo-600 uppercase tracking-[0.2em] bg-indigo-50 px-4 py-1.5 rounded-full border border-indigo-100">
+          <i className="fas fa-shield-alt mr-2"></i>Contenido Protegido
+        </span>
+        <p className="text-slate-400 text-[10px] font-bold uppercase">La descarga de este reporte está restringida</p>
+      </div>
+    </div>
+  );
+}
 
 const LandingPage = ({ onLoginClick }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showTcdReport, setShowTcdReport] = useState(false);
 
   const slides = [
-    { url: '/img/unidos.jpeg',           title: 'Unidos 2026',           desc: 'Caminando juntos en fe.' },
-    { url: '/img/oracion_matutina.jpeg',  title: 'Oración Matutina',      desc: 'Buscando su presencia al amanecer.' },
-    { url: '/img/24_horas.jpeg',         title: 'Oración 24 Horas',      desc: 'Intercesión sin cesar.' },
-    { url: '/img/estacion_generocidad.jpeg', title: 'Estación Generosidad', desc: 'Compartiendo amor y bendición.' },
-    { url: '/img/noches_adoracion.jpeg', title: 'Noches de Adoración',   desc: 'Exaltando al Rey de Reyes.' },
-    { url: '/img/reunion_familiar.jpeg', title: 'Reunión Familiar',     desc: 'Un lugar para todos.' },
-    { url: '/img/nuestras_reuniones.jpeg', title: 'Nuestras Reuniones',   desc: 'Ven y forma parte.' },
+    { url: '/img/unidos.jpeg' },
+    { url: '/img/oracion_matutina.jpeg' },
+    { url: '/img/oracion_ayuno.jpeg' },
+    { url: '/img/24_horas.jpeg' },
+    { url: '/img/estacion_generocidad.jpeg' },
+    { url: '/img/noches_adoracion.jpeg' },
+    { url: '/img/reunion_familiar.jpeg' },
+    { url: '/img/nuestras_reuniones.jpeg'},
   ];
 
   // Auto-carrusel cada 5 segundos
@@ -25,6 +152,7 @@ const LandingPage = ({ onLoginClick }) => {
   const navLinks = [
     { label: 'Inicio',    href: '#inicio' },
     { label: 'Servicios', href: '#servicios' },
+    { label: 'TCD del Mes', href: '#tcd' },
     { label: 'Videos',    href: '#videos' },
     { label: 'Eventos',   href: '#eventos' },
     { label: 'Contacto',  href: '#contacto' },
@@ -92,7 +220,7 @@ const LandingPage = ({ onLoginClick }) => {
       </div>
 
       {/* --- Carrusel / Hero --- */}
-      <div className="relative h-[400px] md:h-[600px] overflow-hidden group">
+      <div className="relative aspect-video w-full overflow-hidden group">
         {slides.map((slide, idx) => (
           <div 
             key={idx}
@@ -144,6 +272,25 @@ const LandingPage = ({ onLoginClick }) => {
             <p className="text-emerald-600 font-black uppercase text-sm tracking-widest">Viernes — 7:00 PM</p>
           </div>
         </div>
+      </section>
+
+
+      {/* --- Sección TCD del Mes --- */}
+      <section id="tcd" className="py-20 max-w-6xl mx-auto px-4 text-center">
+        <h2 className="text-3xl font-black mb-2 uppercase tracking-tight">TCD del Mes</h2>
+        <div className="w-16 h-1.5 bg-indigo-600 mx-auto mb-4 rounded-full" />
+        <p className="text-slate-500 mb-8 max-w-2xl mx-auto font-medium">
+          El Tiempo Con Dios de nuestra congregación. Cada imagen refleja el compromiso diario de nuestros servidores.
+        </p>
+
+        <button 
+          onClick={() => setShowTcdReport(!showTcdReport)}
+          className="mb-12 bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-100"
+        >
+          {showTcdReport ? 'Ocultar TCD' : 'Ver TCD Mensual'}
+        </button>
+
+        <TCDGallery isVisible={showTcdReport} />
       </section>
 
       {/* --- Sección Videos --- */}
