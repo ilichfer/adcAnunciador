@@ -327,22 +327,22 @@ const LandingPage = ({ onLoginClick }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex items-center gap-6 p-6 bg-white border border-slate-200 rounded-3xl text-left hover:border-amber-500 transition-colors shadow-sm">
             <div className="bg-amber-100 text-amber-600 w-20 h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0">
-              <span className="text-2xl font-black">16</span>
-              <span className="text-[10px] font-bold uppercase">ENE</span>
+              <span className="text-2xl font-black">25</span>
+              <span className="text-[10px] font-bold uppercase">ABR</span>
             </div>
             <div>
-              <h4 className="font-bold text-xl">Congreso 2026</h4>
-              <p className="text-slate-400 text-sm">3 días de renovación espiritual.</p>
+              <h4 className="font-bold text-xl">Dia de los niños</h4>
+              <p className="text-slate-400 text-sm">8:00 a 10:00 AM</p>
             </div>
           </div>
           <div className="flex items-center gap-6 p-6 bg-white border border-slate-200 rounded-3xl text-left hover:border-amber-500 transition-colors shadow-sm">
             <div className="bg-amber-100 text-amber-600 w-20 h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0">
-              <span className="text-2xl font-black">15</span>
-              <span className="text-[10px] font-bold uppercase">AGO</span>
+              <span className="text-2xl font-black">18</span>
+              <span className="text-[10px] font-bold uppercase">MAy</span>
             </div>
             <div>
-              <h4 className="font-bold text-xl">Conferencia de Hombres</h4>
-              <p className="text-slate-400 text-sm">ADC Central — Edificando vidas.</p>
+              <h4 className="font-bold text-xl">4to festival misionero</h4>
+              <p className="text-slate-400 text-sm">ADC Central — Misiones.</p>
             </div>
           </div>
         </div>

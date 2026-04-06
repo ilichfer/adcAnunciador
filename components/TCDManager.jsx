@@ -17,14 +17,17 @@ function EmptyTCD() {
   );
 }
 
+
 // ─── Uploader ─────────────────────────────────────────────────────────────────
 
-function TCDUploader({ onUpload, currentUser }) {
+function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
   const [preview, setPreview] = useState(null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { getUrl } = useApi();
+
+  
 
   const handleFile = (e) => {
     const selected = e.target.files[0];
@@ -54,8 +57,9 @@ function TCDUploader({ onUpload, currentUser }) {
       });
       setFile(null);
       setPreview(null);
+      onUpdateFile();
     } catch (err) {
-      setError('No se pudo subir la imagen. Intenta de nuevo.');
+      setError('Su TCD ya fue subido el dia de hoy.');
     } finally {
       setLoading(false);
     }
@@ -142,6 +146,12 @@ const TCDManager = () => {
 
   // ── Estado local: solo UI ──────────────────────────────────────────────────
   const [range, setRange] = useState({ start: '', end: '' });
+  
+  const [updateFile, setUpdateFile] = useState(false);
+
+const handleUpdaateFile = () => {
+    setUpdateFile(true);
+  }
 
   const filtered = tcdEntries.filter(entry => {
     if (!range.start || !range.end) return true;
@@ -158,14 +168,14 @@ const TCDManager = () => {
       .then(json => { setTdcCount(json); setSchError(false); })
       .catch(() => setSchError(true))
       .finally(() => setLoading(false));
-  }, [authUser?.id]);
+  }, [authUser?.id, updateFile]);
 
 
 
 
   return (
     <div className="space-y-8">
-      <TCDUploader onUpload={addTcdEntry} currentUser={authUser} />
+      <TCDUploader onUpload={addTcdEntry} currentUser={authUser} onUpdateFile={handleUpdaateFile} />
 
       <div className="space-y-4">
         <div className="items-center flex-wrap gap-4">
