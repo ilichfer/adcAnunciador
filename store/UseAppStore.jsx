@@ -106,6 +106,13 @@ export const useAppStore = create(
             fetch(`${API_BASE}/assignments`, { headers }).then(safeJson).catch(() => []), // Especialidades
           ]);
 
+        // Log para ver el estado de todas las peticiones al terminar el Promise.allSettled
+        console.log("DEBUG [Store] - Resultados Raw:", { user, users, events, ministries, tcd, assignments });
+
+        if (events.status === 'fulfilled') {
+          console.log("DEBUG [Store] - Estructura detectada en /events:", events.value);
+        }
+
         set(
           {
             loading: false,
@@ -114,7 +121,12 @@ export const useAppStore = create(
                            ? (Array.isArray(users.value) ? users.value.map(mapearUsuario) : [])
                            : [],
             events:      events.status      === 'fulfilled'
-                           ? (Array.isArray(events.value) ? events.value : events.value?.events ?? [])
+                           ? (Array.isArray(events.value) 
+                               ? events.value 
+                               : (events.value?.events || 
+                                  events.value?.data || 
+                                  events.value?.content || 
+                                  (events.value && typeof events.value === 'object' ? [events.value] : [])))
                            : [],
             ministries:  ministries.status  === 'fulfilled'
                            ? (Array.isArray(ministries.value) ? ministries.value : [])

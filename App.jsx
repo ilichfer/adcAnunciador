@@ -2,7 +2,7 @@
 // ADMIN   → ve todas las vistas
 // SERVIDOR → solo profile, schedule, tcd, reports
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Navbar          from './components/Navbar.jsx';
 import Header          from './components/Header.jsx';
 import Profile         from './components/Profile.jsx';
@@ -16,6 +16,7 @@ import ServiceSearch   from './components/ServiceSearch.jsx';
 import Contact         from './components/Contact.jsx';
 import Login           from './components/Login.jsx';
 import LandingPage     from './components/LandingPage.jsx';
+import CoordinatorReport from './components/CoordinatorReport.jsx';
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
 
@@ -54,10 +55,30 @@ const App = () => {
   const activeTab    = useAppStore(s => s.activeTab);
   const setActiveTab = useAppStore(s => s.setActiveTab);
   const loading      = useAppStore(s => s.loading);
+  const events       = useAppStore(s => s.events);
   const fetchAppData = useAppStore(s => s.fetchAppData);
   const resetAppData = useAppStore(s => s.resetAppData);
 
-  const allowedTabs = isAdmin ? ADMIN_TABS : SERVER_TABS;
+  // Debug log para monitorear la llegada de eventos desde el Store
+  useEffect(() => {
+    console.log("DEBUG [App.jsx] - Estado actual de events:", events);
+  }, [events]);
+
+  // Validar si el usuario es coordinador el día de hoy
+  const isCoordinatorToday = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return events.some(e => 
+      e.date === today && 
+      String(e.coordinator?.id) === String(authUser?.id)
+    );
+  }, [events, authUser]);
+
+  // Construir set de tabs permitidos dinámicamente
+  const allowedTabs = useMemo(() => {
+    const tabs = new Set(isAdmin ? ADMIN_TABS : SERVER_TABS);
+    if (isCoordinatorToday) tabs.add('coordinator-report');
+    return tabs;
+  }, [isAdmin, isCoordinatorToday]);
 
   useEffect(() => {
     if (authUser) {
@@ -107,6 +128,8 @@ const App = () => {
         {currentTab === 'schedule' && <ErrorBoundary><Schedule /></ErrorBoundary>}
         {currentTab === 'tcd'      && <TCDManager />}
         {currentTab === 'reports'  && <Reports />}
+        {currentTab === 'coordinator-report' && <CoordinatorReport />}
+
 
         {/* ── Vistas solo ADMIN ─────────────────────────────────────────── */}
         {currentTab === 'service-search' && (canView('service-search') ? <ServiceSearch />   : <Unauthorized />)}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useApi } from '../components/useApi.js';
 
 // ─── Estados de carga y error ────────────────────────────────────────────────
 
@@ -209,9 +210,10 @@ function Schedule() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(null);
+  const { getUrl } = useApi();
 
   useEffect(() => {
-    fetch('https://anunciaig.com/api/events')
+    fetch(getUrl('events'))
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

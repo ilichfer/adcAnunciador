@@ -16,9 +16,76 @@ function ProfileLoader() {
 
 // ─── Tarjeta de turno ─────────────────────────────────────────────────────────
 
-function TurnoCard({ turno }) {
+function ConsultDetailView({ data, onBack }) {
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onBack}
+          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-400 transition-colors flex-shrink-0"
+        >
+          <i className="fas fa-chevron-left"></i>
+        </button>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Programación General</p>
+          <h3 className="text-xl font-black text-slate-800 capitalize">Detalle del Servicio</h3>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                {['Ministerio', 'Posición', 'Encargado', 'Fecha'].map((h) => (
+                  <th key={h} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {data.map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                      <span className="text-sm font-bold text-slate-700">{item.nombreMinisterio}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-medium text-slate-600">{item.posicion}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-slate-800">
+                      <i className="fas fa-user-circle text-slate-300"></i>
+                      <span className="text-sm font-semibold">{item.encargado}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs font-bold text-slate-400 tabular-nums">
+                      {item.fechaServcio}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {data.length === 0 && (
+          <div className="text-center py-20 bg-slate-50/50">
+            <i className="fas fa-search text-slate-200 text-4xl mb-4 block"></i>
+            <p className="text-slate-400 font-medium">No se encontró información detallada.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TurnoCard({ turno, onConsultar }) {
   const fecha = new Date(turno.fechaServcio + 'T00:00:00');
-  const hoy   = new Date();
+  const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
   const esFuturo = fecha >= hoy;
 
@@ -31,15 +98,13 @@ function TurnoCard({ turno }) {
   });
 
   return (
-    <div className={`p-4 rounded-2xl border transition-all hover:shadow-md ${
-      esFuturo
+    <div className={`p-4 rounded-2xl border transition-all hover:shadow-md ${esFuturo
         ? 'bg-white border-slate-200 hover:border-indigo-300'
         : 'bg-slate-50 border-slate-100 opacity-70'
-    }`}>
+      }`}>
       <div className="flex justify-between items-start mb-3">
-        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-          esFuturo ? 'bg-indigo-50 text-indigo-900' : 'bg-slate-100 text-slate-700'
-        }`}>
+        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${esFuturo ? 'bg-indigo-50 text-indigo-900' : 'bg-slate-100 text-slate-700'
+          }`}>
           {diaCorto}
         </span>
         {!esFuturo && <span className="text-[10px] text-slate-900 font-bold uppercase">Pasado</span>}
@@ -60,13 +125,20 @@ function TurnoCard({ turno }) {
       <div className="mt-3 pt-3 border-t border-slate-100">
         <span className="text-[15px] text-slate-900 capitalize">{fechaFormateada}</span>
       </div>
+      <button
+        onClick={() => onConsultar(turno.fechaServcio, turno.idMinisterio)}
+        className="mt-4 w-full py-2 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-xs hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider border border-indigo-100"
+      >
+        <i className="fas fa-search mr-2"></i>
+        Consultar
+      </button>
     </div>
   );
 }
 
 // ─── Sección de programación ──────────────────────────────────────────────────
 
-function MiProgramacion({ schedule, loading, error }) {
+function MiProgramacion({ schedule, loading, error, onConsultar }) {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
 
@@ -108,7 +180,7 @@ function MiProgramacion({ schedule, loading, error }) {
       {!loading && !error && schedule.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {schedule.map((turno, idx) => (
-            <TurnoCard key={`${turno.fechaServcio}-${turno.idMinisterio}-${idx}`} turno={turno} />
+            <TurnoCard key={`${turno.fechaServcio}-${turno.idMinisterio}-${idx}`} turno={turno} onConsultar={onConsultar} />
           ))}
         </div>
       )}
@@ -118,7 +190,7 @@ function MiProgramacion({ schedule, loading, error }) {
 
 // ─── Vista del perfil ─────────────────────────────────────────────────────────
 
-function ProfileView({ user, schedule, scheduleLoading, scheduleError }) {
+function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsultar }) {
   const ministerios = useMemo(() => {
     if (!user?.ministry) return [];
     if (Array.isArray(user.ministry)) return user.ministry;
@@ -152,7 +224,13 @@ function ProfileView({ user, schedule, scheduleLoading, scheduleError }) {
             </span>
           )}
           {ministerios.length > 0 && (
+
             <div className="flex flex-wrap gap-2 mt-3">
+              
+              <h3 className="text-lg font-semibold mb-4">
+                ministerios:
+              </h3>
+              
               {ministerios.map((m, i) => (
                 <span key={i} className="text-xs font-bold bg-purple-50 text-purple-600 px-3 py-1 rounded-full border border-purple-100">
                   <i className="fas fa-sitemap mr-1 text-[10px]"></i>{m}
@@ -192,10 +270,11 @@ function ProfileView({ user, schedule, scheduleLoading, scheduleError }) {
       </div>
 
       {/* Programación */}
-      <MiProgramacion schedule={schedule} loading={scheduleLoading} error={scheduleError} />
+      <MiProgramacion schedule={schedule} loading={scheduleLoading} error={scheduleError} onConsultar={onConsultar} />
     </div>
   );
 }
+
 
 // ─── Componente raíz ──────────────────────────────────────────────────────────
 
@@ -207,11 +286,32 @@ const Profile = () => {
   const storeUser = useAppStore(s => s.user);
 
   // ── Estado local: carga del perfil y programación ─────────────────────────
-  const [user, setUser]                  = useState(null);
-  const [loading, setLoading]            = useState(true);
-  const [schedule, setSchedule]          = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [schedule, setSchedule] = useState([]);
   const [scheduleLoading, setSchLoading] = useState(true);
-  const [scheduleError, setSchError]     = useState(false);
+  const [scheduleError, setSchError] = useState(false);
+
+  // Estados para la vista de detalle
+  const [view, setView] = useState('profile'); // 'profile' | 'detail'
+  const [detailData, setDetailData] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // Manejador para consultar el horario específico
+  const handleConsultar = (fecha, idMinisterio) => {
+    setDetailLoading(true);
+    authFetch(getUrl(`/findSchedule?fecha=${fecha}&idMinisterio=${idMinisterio}`))
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        setDetailData(Array.isArray(data) ? data : [data]);
+        setView('detail');
+      })
+      .catch(err => {
+        console.error('Error al consultar la programación:', err);
+        alert("No se pudo cargar el detalle del servicio.");
+      })
+      .finally(() => setDetailLoading(false));
+  };
 
   // Si el store ya tiene el usuario, lo usa directamente
   useEffect(() => {
@@ -227,9 +327,9 @@ const Profile = () => {
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => setUser(data))
         .catch(() => setUser({
-          name:     authUser?.nombre ?? 'Usuario',
-          role:     authUser?.rol    ?? 'Servidor',
-          email:    '', phone: '', avatar: null, ministry: [],
+          name: authUser?.nombre ?? 'Usuario',
+          role: authUser?.rol ?? 'Servidor',
+          email: '', phone: '', avatar: null, ministry: [],
         }))
         .finally(() => setLoading(false));
     }
@@ -246,8 +346,12 @@ const Profile = () => {
       .finally(() => setSchLoading(false));
   }, [authUser?.id]);
 
-  if (loading) return <ProfileLoader />;
-  if (!user)   return null;
+  if (loading || detailLoading) return <ProfileLoader />;
+  if (!user) return null;
+
+  if (view === 'detail') {
+    return <ConsultDetailView data={detailData} onBack={() => setView('profile')} />;
+  }
 
   return (
     <ProfileView
@@ -255,6 +359,7 @@ const Profile = () => {
       schedule={schedule}
       scheduleLoading={scheduleLoading}
       scheduleError={scheduleError}
+      onConsultar={handleConsultar}
     />
   );
 };

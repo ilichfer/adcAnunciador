@@ -1,11 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useAppStore } from '../store/UseAppStore.jsx';
 
 const Navbar = ({ activeTab, setActiveTab }) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, authUser } = useAuth();
+  const events = useAppStore(s => s.events);
   const [isOpen, setIsOpen]             = useState(false);
   const [showTcdSubmenu, setShowTcdSubmenu] = useState(false);
   const submenuRef = useRef(null);
+
+  // Validar si el usuario es coordinador el día de hoy
+  const today = new Date().toISOString().split('T')[0];
+  const isCoordinatorToday = events.some(e => 
+    e.date === today && 
+    String(e.coordinator?.id) === String(authUser?.id)
+  );
 
   // ── Tabs por rol ────────────────────────────────────────────────────────────
   // Tabs que VE cualquier usuario (SERVIDOR / ADMIN)
@@ -23,6 +32,8 @@ const Navbar = ({ activeTab, setActiveTab }) => {
         ...(isAdmin ? [{ id: 'reports', label: 'Reportes TCD', icon: 'fa-chart-bar' }] : []),
       ],
     },
+    // Nueva opción dinámica para coordinadores
+    ...(isCoordinatorToday ? [{ id: 'coordinator-report', label: 'Coordinador', icon: 'fa-user-tie' }] : []),
   ];
 
   // Tabs EXTRA que solo ve el ADMIN

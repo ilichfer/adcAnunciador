@@ -9,9 +9,17 @@ const Login = ({ onBack }) => {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
   const [showPass, setShowPass] = useState(false);
+  const [view, setView]         = useState('login'); // 'login' | 'changePassword'
+  const [changePassForm, setChangePassForm] = useState({ documento: '', password: '' });
+  const [successMsg, setSuccessMsg] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (error) setError(null);
+  };
+
+  const handleChangePasswordForm = (e) => {
+    setChangePassForm({ ...changePassForm, [e.target.name]: e.target.value });
     if (error) setError(null);
   };
 
@@ -42,6 +50,33 @@ const Login = ({ onBack }) => {
     }
   };
 
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    try {
+      const res = await fetch(getUrl('/updatePassword'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(changePassForm),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Error al actualizar contraseña');
+      }
+
+      setSuccessMsg('su contraseña ha suido actualizada');
+      setChangePassForm({ documento: '', password: '' });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -55,17 +90,27 @@ const Login = ({ onBack }) => {
         </div>
 
         <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8">
-          {onBack && (
+          {(onBack || view !== 'login') && (
             <button 
-              onClick={onBack}
+              onClick={view === 'login' ? onBack : () => { setView('login'); setError(null); setSuccessMsg(null); }}
               className="mb-4 text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors group"
             >
               <i className="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
-              Volver al portal
+              {view === 'login' ? 'Volver al portal' : 'Volver al inicio de sesión'}
             </button>
           )}
-          <h2 className="text-xl font-bold text-slate-800 mb-1">Iniciar sesión</h2>
-          <p className="text-slate-400 text-sm mb-8">Ingresa tus credenciales para continuar</p>
+
+          {view === 'login' ? (
+            <>
+              <h2 className="text-xl font-bold text-slate-800 mb-1">Iniciar sesión</h2>
+              <p className="text-slate-400 text-sm mb-8">Ingresa tus credenciales para continuar</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold text-slate-800 mb-1">Cambiar contraseña</h2>
+              <p className="text-slate-400 text-sm mb-8">Ingresa tu documento y la nueva contraseña</p>
+            </>
+          )}
 
           {error && (
             <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl mb-6">
@@ -74,68 +119,145 @@ const Login = ({ onBack }) => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                Cédula
-              </label>
-              <div className="relative">
-                <i className="fas fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
-                <input
-                  type="text"
-                  name="cedula"
-                  value={form.cedula}
-                  onChange={handleChange}
-                  placeholder="Número de cédula"
-                  required
-                  className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                />
-              </div>
+          {successMsg && (
+            <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-2xl mb-6">
+              <i className="fas fa-check-circle text-emerald-400"></i>
+              <span className="text-sm font-medium">{successMsg}</span>
             </div>
+          )}
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                Contraseña
-              </label>
-              <div className="relative">
-                <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  required
-                  autoComplete="current-password"
-                  className="w-full pl-10 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                />
-                <button
+          {view === 'login' ? (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Cédula
+                </label>
+                <div className="relative">
+                  <i className="fas fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
+                  <input
+                    type="text"
+                    name="cedula"
+                    value={form.cedula}
+                    onChange={handleChange}
+                    placeholder="Número de cédula"
+                    required
+                    className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                    className="w-full pl-10 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
+                  >
+                    <i className={`fas ${showPass ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !form.cedula || !form.password}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 hover:-translate-y-0.5 disabled:translate-y-0 transition-all mt-2"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Ingresando...
+                  </span>
+                ) : (
+                  'Ingresar'
+                )}
+              </button>
+
+              <div className="text-center pt-2">
+                <button 
                   type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
+                  onClick={() => { setView('changePassword'); setError(null); setSuccessMsg(null); }}
+                  className="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors underline underline-offset-4"
                 >
-                  <i className={`fas ${showPass ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                  ¿Olvidaste tu contraseña? Cambiar contraseña
                 </button>
               </div>
-            </div>
+            </form>
+          ) : (
+            <form onSubmit={handleUpdatePassword} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Número de documento
+                </label>
+                <div className="relative">
+                  <i className="fas fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
+                  <input
+                    type="text"
+                    name="documento"
+                    value={changePassForm.documento}
+                    onChange={handleChangePasswordForm}
+                    placeholder="Documento registrado"
+                    required
+                    className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading || !form.cedula || !form.password}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 hover:-translate-y-0.5 disabled:translate-y-0 transition-all mt-2"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                  Ingresando...
-                </span>
-              ) : (
-                'Ingresar'
-              )}
-            </button>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Nueva Contraseña
+                </label>
+                <div className="relative">
+                  <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    name="password"
+                    value={changePassForm.password}
+                    onChange={handleChangePasswordForm}
+                    placeholder="Nueva contraseña"
+                    required
+                    className="w-full pl-10 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors"
+                  >
+                    <i className={`fas ${showPass ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                  </button>
+                </div>
+              </div>
 
-          </form>
+              <button
+                type="submit"
+                disabled={loading || !changePassForm.documento || !changePassForm.password}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 hover:-translate-y-0.5 disabled:translate-y-0 transition-all mt-2"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Actualizando...
+                  </span>
+                ) : (
+                  'Actualizar'
+                )}
+              </button>
+            </form>
+          )}
         </div>
 
         <p className="text-center text-slate-400 text-xs mt-6">
