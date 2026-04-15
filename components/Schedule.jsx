@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApi } from '../components/useApi.js';
+// ESTO CAUSA EL ERROR si no exportaste la función
+import Birthday from './Birthday.jsx';
+
+
 
 // ─── Estados de carga y error ────────────────────────────────────────────────
 
@@ -95,7 +99,7 @@ function MinistryCard({ ministryName, assignments }) {
 
 // ─── Vista principal ──────────────────────────────────────────────────────────
 
-function ScheduleView({ events }) {
+function ScheduleView({ events, birthdays }) {
   const formatDate = (dateStr) =>
     new Date(dateStr + 'T00:00:00').toLocaleDateString('es-ES', {
       weekday: 'long',
@@ -124,6 +128,12 @@ function ScheduleView({ events }) {
 
   return (
     <div className="space-y-6">
+
+      {birthdays.length > 0 && (
+        <Birthday birthdays={birthdays} /> // Asegúrate de usar el nombre correcto aquí
+      )}
+
+
       {/* Encabezado + filtro de fechas */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -131,15 +141,15 @@ function ScheduleView({ events }) {
           <p className="text-sm text-slate-500">Vista consolidada de actividades próximas</p>
         </div>
 
+
         {uniqueDates.length > 1 && (
           <div className="flex space-x-2 bg-slate-100 p-1 rounded-xl self-start overflow-x-auto max-w-full">
             <button
               onClick={() => setSelectedDate(null)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                selectedDate === null
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${selectedDate === null
                   ? 'bg-white text-indigo-600 shadow-sm'
                   : 'text-slate-500 hover:text-indigo-400'
-              }`}
+                }`}
             >
               Ver Todos
             </button>
@@ -147,11 +157,10 @@ function ScheduleView({ events }) {
               <button
                 key={date}
                 onClick={() => setSelectedDate(date)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  selectedDate === date
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${selectedDate === date
                     ? 'bg-white text-indigo-600 shadow-sm'
                     : 'text-slate-500 hover:text-indigo-400'
-                }`}
+                  }`}
               >
                 {new Date(date + 'T00:00:00').toLocaleDateString('es-ES', {
                   weekday: 'short',
@@ -208,8 +217,9 @@ function ScheduleView({ events }) {
 
 function Schedule() {
   const [events, setEvents] = useState([]);
+  const [birthdays, setBirthdays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState(null);
+  const [error, setError] = useState(null);
   const { getUrl } = useApi();
 
   useEffect(() => {
@@ -241,10 +251,34 @@ function Schedule() {
       });
   }, []);
 
+
+  useEffect(() => {
+    fetch(getUrl('findBirthday'))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((json) => {
+        // Soporta: objeto solo, array, o { events: [...] }
+        let data = Array.isArray(json)
+          ? json
+          : json
+            ? json
+            : [json]; // ← objeto solo → lo envuelve en array
+
+        setBirthdays(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
   if (loading) return <ScheduleLoader />;
-  if (error)   return <ScheduleError message={error} />;
+  if (error) return <ScheduleError message={error} />;
   if (events.length === 0) return <ScheduleEmpty />;
-  return <ScheduleView events={events} />;
+  return <ScheduleView events={events} birthdays={birthdays} />;
 }
 
 export default Schedule;
