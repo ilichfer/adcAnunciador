@@ -265,13 +265,11 @@ function Schedule() {
           : json
             ? json
             : [json]; // ← objeto solo → lo envuelve en array
-
         setBirthdays(data);
-        setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        console.error("Error al cargar cumpleañeros:", err);
+        setBirthdays([]); // En caso de error (500, etc), se deja vacío para no mostrar el componente
       });
   }, []);
 

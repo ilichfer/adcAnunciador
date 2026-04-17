@@ -37,7 +37,7 @@ function ConsultDetailView({ data, onBack }) {
           <table className="w-full text-left">
             <thead className="bg-slate-50 border-b">
               <tr>
-                {['Ministerio', 'Posición', 'Encargado', 'Fecha'].map((h) => (
+                {[ 'Posición', 'Encargado', 'Fecha'].map((h) => (
                   <th key={h} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">
                     {h}
                   </th>
@@ -46,13 +46,7 @@ function ConsultDetailView({ data, onBack }) {
             </thead>
             <tbody className="divide-y">
               {data.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                      <span className="text-sm font-bold text-slate-700">{item.nombreMinisterio}</span>
-                    </div>
-                  </td>
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">                  
                   <td className="px-6 py-4">
                     <span className="text-sm font-medium text-slate-600">{item.posicion}</span>
                   </td>
@@ -142,10 +136,7 @@ function MiProgramacion({ schedule, loading, error, onConsultar }) {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
 
-  const ordenados = useMemo(() => {
-    if (!Array.isArray(schedule)) return [];
-    return [...schedule].sort((a, b) => new Date(a.fechaServcio) - new Date(b.fechaServcio));
-  }, [schedule]);
+ 
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
