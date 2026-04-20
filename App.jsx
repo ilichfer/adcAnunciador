@@ -17,6 +17,7 @@ import Contact         from './components/Contact.jsx';
 import Login           from './components/Login.jsx';
 import LandingPage     from './components/LandingPage.jsx';
 import CoordinatorReport from './components/CoordinatorReport.jsx';
+import BirthdayManager  from './components/BirthdayManager.jsx';
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
 
@@ -45,8 +46,8 @@ function Unauthorized() {
 }
 
 // ── Tabs permitidos por rol ───────────────────────────────────────────────────
-const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'contact']);
-const SERVER_TABS = new Set(['profile', 'schedule', 'tcd']); // 'reports' solo ADMIN
+const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'contact', 'birthdays']);
+const SERVER_TABS = new Set(['profile', 'schedule', 'tcd', 'birthdays']); // 'reports' solo ADMIN
 
 const App = () => {
   const { authUser, logout, isAdmin } = useAuth();
@@ -128,6 +129,7 @@ const App = () => {
         {currentTab === 'schedule' && <ErrorBoundary><Schedule /></ErrorBoundary>}
         {currentTab === 'tcd'      && <TCDManager />}
         {currentTab === 'reports'  && <Reports />}
+        {currentTab === 'birthdays' && <BirthdayManager />}
         {currentTab === 'coordinator-report' && <CoordinatorReport />}
 
 

@@ -190,8 +190,27 @@ const UsersManager = () => {
       });
   }, []);
 
-  const handleToggle = (id) => {
-    toggleUserStatus(id); // actualiza el store (y todo componente que lo use)
+  const handleToggle = async (id) => {
+    const targetUser = users.find(u => u.id === id);
+    if (!targetUser) return;
+
+    const newActiveState = !targetUser.active;
+
+    try {
+      // Endpoint: /personas/{id}/toggle-active?active=true/false
+      const res = await authFetch(getUrl(`/personas/${id}/toggle-active?active=${newActiveState}`));
+
+      if (res.ok) {
+        // Si el servidor confirma el cambio, actualizamos el store local
+        toggleUserStatus(id);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error: ${errorData.message || 'No se pudo cambiar el estado del usuario.'}`);
+      }
+    } catch (err) {
+      console.error('Error al cambiar el estado:', err);
+      alert('Error de conexión con el servidor.');
+    }
   };
 
   const handleAdd = (newUser) => {

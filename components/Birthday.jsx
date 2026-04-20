@@ -28,8 +28,7 @@ export default function Birthday({ birthdays }) {
       // Detectar cambio de tamaño de ventana para el canvas del confeti
       window.addEventListener('resize', detectSize);
 
-      // 2. Temporizador para detener el confeti después de 5 segundos
-      // (así no consume recursos indefinidamente)
+      // Temporizador para detener el confeti después de 6 segundos
       const timer = setTimeout(() => {
         setShowConfetti(false);
       }, 6000);
@@ -106,6 +105,7 @@ function UserBirthdayCard({ user }) {
         <div className="font-bold text-slate-800 text-lg">
           {user.nombre} {user.apellido}
         </div>
+        <div className="text-sm text-slate-500 font-medium">Dia: {user.fechanacimiento}</div>
       </div>
 
       {/* Decoración discreta que aparece al hacer hover */}

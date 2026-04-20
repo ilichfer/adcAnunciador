@@ -20,6 +20,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   // Tabs que VE cualquier usuario (SERVIDOR / ADMIN)
   const commonTabs = [
     { id: 'schedule',       label: 'Programación',      icon: 'fa-calendar-alt' },
+    { id: 'birthdays',      label: 'Cumpleaños',        icon: 'fa-cake-candles' },
     { id: 'profile',        label: 'Mi Perfil',          icon: 'fa-user' },
     {
       id: 'tcd-root',
