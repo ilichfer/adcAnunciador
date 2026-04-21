@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useApi } from '../components/useApi.js';
 
 // Reports NO necesita datos del store: hace su propio fetch al endpoint
 // /api/scheduleByDate con un rango de fechas. Se mantiene igual al original.
 
-const path = 'https://anunciaig.com/api';
 
 // ─── Estado: pide rango ───────────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ function ReportsEmpty() {
 
 // ─── Fila de usuario en reporte ───────────────────────────────────────────────
 
-function ReportRow({ item, maxCount }) {
+function ReportRow({ item, maxCount, onShowDetails }) {
   const pct = maxCount > 0 ? Math.round((item.cantidadEntregados / maxCount) * 100) : 0;
   const badge =
     item.cantidadEntregados === 0 ? { label: 'Sin registros', cls: 'bg-rose-100 text-rose-600' }
@@ -65,8 +65,58 @@ function ReportRow({ item, maxCount }) {
         </div>
       </div>
       <div className="text-right flex-shrink-0">
+        <button 
+          onClick={() => onShowDetails(item.idPersona)}
+          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
+        >
+          ver mas
+        </button>
+      </div>
+      <div className="text-right flex-shrink-0">
         <div className="text-2xl font-black text-indigo-600">{item.cantidadEntregados}</div>
         <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">subidas</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Detalle de TCD por persona ──────────────────────────────────────────────
+
+function ReportDetails({ data, userName, onBack }) {
+  return (
+    <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4">
+      <div className="flex items-center gap-3 mb-6">
+        <button 
+          onClick={onBack}
+          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"
+        >
+          <i className="fas fa-chevron-left"></i>
+        </button>
+        <div>
+          <h3 className="text-xl font-bold text-slate-800">Registros TCD</h3>
+          <p className="text-sm text-slate-400">Usuario: <span className="capitalize font-medium text-slate-600">{userName}</span></p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
+                <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha de Registro</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {data.map((record, idx) => (
+                <tr key={record.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-slate-400 font-mono">{idx + 1}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-700">{record.fechaCreacion}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -77,8 +127,12 @@ function ReportRow({ item, maxCount }) {
 const Reports = () => {
   const [range, setRange] = useState({ fechaInicio: '', fechaFin: '' });
   const [reportData, setReportData] = useState(null);
+  const [details, setDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [selectedUserName, setSelectedUserName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { getUrl } = useApi();
 
   useEffect(() => {
     if (!range.fechaInicio || !range.fechaFin) {
@@ -92,7 +146,7 @@ const Reports = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${path}/scheduleByDate`, {
+        const res = await fetch(getUrl(`/scheduleByDate`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(range),
@@ -113,6 +167,26 @@ const Reports = () => {
 
   const maxCount = reportData ? Math.max(...reportData.map(r => r.cantidadEntregados), 1) : 1;
   const totalUploads = reportData?.reduce((sum, r) => sum + r.cantidadEntregados, 0) ?? 0;
+
+  const handleShowDetails = async (idPersona) => {
+    setDetailsLoading(true);
+    try {
+      const res = await fetch(getUrl(`/findTcdPerson?idPersona=${idPersona}&fechaInicio=${range.fechaInicio}&fechaFin=${range.fechaFin}`), {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('No se pudo obtener el detalle');
+      const data = await res.json();
+      setDetails(Array.isArray(data) ? data : []);
+      
+      const userItem = reportData.find(r => r.idPersona === idPersona);
+      setSelectedUserName(userItem?.nombre || 'Usuario');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -161,6 +235,13 @@ const Reports = () => {
             <i className="fas fa-spinner fa-spin text-2xl mb-3 block text-indigo-400"></i>
             <p className="text-sm">Cargando reporte...</p>
           </div>
+        ) : detailsLoading ? (
+          <div className="text-center py-14 text-slate-400">
+            <i className="fas fa-spinner fa-spin text-2xl mb-3 block text-indigo-400"></i>
+            <p className="text-sm">Consultando registros...</p>
+          </div>
+        ) : details ? (
+          <ReportDetails data={details} userName={selectedUserName} onBack={() => setDetails(null)} />
         ) : !reportData ? (
           <ReportsPlaceholder />
         ) : reportData.length === 0 ? (
@@ -168,7 +249,12 @@ const Reports = () => {
         ) : (
           <div className="space-y-3">
             {reportData.map(item => (
-              <ReportRow key={item.idPersona} item={item} maxCount={maxCount} />
+              <ReportRow 
+                key={item.idPersona} 
+                item={item} 
+                maxCount={maxCount} 
+                onShowDetails={handleShowDetails} 
+              />
             ))}
           </div>
         )}

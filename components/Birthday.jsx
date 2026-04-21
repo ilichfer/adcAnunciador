@@ -2,7 +2,7 @@ import { useState, useEffect} from 'react';
 // 1. Importamos la biblioteca
 import Confetti from 'react-confetti';
 
-export default function Birthday({ birthdays }) {
+export default function Birthday({ birthdays ,currentMonth}) {
   // Estado para controlar cuándo se muestra el confeti
   const [showConfetti, setShowConfetti] = useState(false);
   
@@ -75,7 +75,7 @@ export default function Birthday({ birthdays }) {
             {/* Listado de cumpleañeros en Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {birthdays.map((user) => (
-                <UserBirthdayCard key={user.id} user={user} />
+                <UserBirthdayCard key={user.id} user={user} currentMonth={currentMonth} />
               ))}
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function Birthday({ birthdays }) {
   );
 }
 
-function UserBirthdayCard({ user }) {
+function UserBirthdayCard({ user, currentMonth }) {
   const initials = (user.nombre ?? '?')
     .split(' ')
     .map((w) => w[0])
@@ -105,7 +105,7 @@ function UserBirthdayCard({ user }) {
         <div className="font-bold text-slate-800 text-lg">
           {user.nombre} {user.apellido}
         </div>
-        <div className="text-sm text-slate-500 font-medium">Dia: {user.fechanacimiento}</div>
+        <div className="text-sm text-slate-500 font-medium">{user.fechanacimiento} de {currentMonth}</div>
       </div>
 
       {/* Decoración discreta que aparece al hacer hover */}

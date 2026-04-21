@@ -50,7 +50,7 @@ const BirthdayManager = () => {
         <div className="h-1.5 w-24 bg-indigo-600 rounded-full mt-2 shadow-sm shadow-indigo-100"></div>
       </div>
 
-      <Birthday birthdays={birthdays} />
+      <Birthday birthdays={birthdays} currentMonth={currentMonth} />
     </div>
   );
 };

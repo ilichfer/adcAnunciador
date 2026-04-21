@@ -100,6 +100,11 @@ function MinistryCard({ ministryName, assignments }) {
 // ─── Vista principal ──────────────────────────────────────────────────────────
 
 function ScheduleView({ events, birthdays }) {
+
+  
+  // Obtener el nombre del mes actual en español
+  const currentMonth = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
+
   const formatDate = (dateStr) =>
     new Date(dateStr + 'T00:00:00').toLocaleDateString('es-ES', {
       weekday: 'long',
@@ -130,7 +135,7 @@ function ScheduleView({ events, birthdays }) {
     <div className="space-y-6">
 
       {birthdays.length > 0 && (
-        <Birthday birthdays={birthdays} /> // Asegúrate de usar el nombre correcto aquí
+        <Birthday birthdays={birthdays} currentMonth={currentMonth} /> // Asegúrate de usar el nombre correcto aquí
       )}
 
 
