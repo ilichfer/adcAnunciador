@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
+import { useApi } from './useApi.js';
 
-const API_MINISTRIES = 'https://anunciaig.com/api/ministries';
-const API_USERS      = 'https://anunciaig.com/api/users';
-const path           = 'https://anunciaig.com/api';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -66,7 +64,7 @@ function MinistryDetailsView({ ministry, onBack, onAddAssignment, onRemoveMember
   useEffect(() => {
     if (!ministry?.id) return;
     setLoading(true);
-    fetch(`${path}/ministries/${ministry.id}/personas`)
+    fetch(getUrl(`ministries/${ministry.id}/personas`))
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(json => setUsersByMinistry(json))
       .catch(() => setUsersByMinistry([]))
@@ -205,7 +203,9 @@ function AssignForm({ ministries, users, onCancel, onAddMinistries, onAddPerson 
 
 // ─── Planificador de programación ─────────────────────────────────────────────
 
-function SchedulePlanner({ ministries, users, onSave, onCancel }) {
+function SchedulePlanner({ ministries, users, onSave, onCancel, authFetch }) {
+  
+  const { getUrl } = useApi();
   const [form, setForm]       = useState({ date: '', time: '09:00 AM', ministryId: '', assignments: {} });
   const [usersMin, setUsersMin] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -216,7 +216,7 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
   useEffect(() => {
     if (!activeMinistry?.id) return;
     setLoading(true);
-    fetch(`https://anunciaig.com/api/ministries/${activeMinistry.id}/personas`)
+    fetch(getUrl(`ministries/${activeMinistry.id}/personas`))
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(json => setUsersMin(json))
       .catch(() => setUsersMin([]))
@@ -226,7 +226,7 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
   const handleAssign = (posId, value) =>
     setForm(prev => ({ ...prev, assignments: { ...prev.assignments, [posId]: value } }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.date || !form.ministryId) return alert('Completa la fecha y el ministerio.');
     const ministry  = ministries.find(m => m.id === form.ministryId);
     const formatted = Object.entries(form.assignments)
@@ -234,13 +234,30 @@ function SchedulePlanner({ ministries, users, onSave, onCancel }) {
       .map(([posId, personId]) => ({
         fechaServicio: form.date, idPersona: personId, idPosicion: posId, idMinisterio: ministry.id,
       }));
+
     if (!formatted.length) return alert('Asigna al menos una persona.');
-    onSave({
-      id: Date.now().toString(),
-      date: form.date,
-      time: form.time,
-      ministries: [{ [ministry.name]: formatted }],
-    });
+
+    try {
+      const res = await authFetch(getUrl(`/saveService`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formatted),
+      });
+
+      if (res.ok) {
+        onSave({
+          id: Date.now().toString(),
+          date: form.date,
+          time: form.time,
+          ministries: [{ [ministry.name]: formatted }],
+        });
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert('Error al publicar la programación: ' + (errData.message || 'Error en el servidor'));
+      }
+    } catch (err) {
+      alert('Error de conexión: ' + err.message);
+    }
   };
 
   if (loading) return <Loader />;
@@ -487,6 +504,7 @@ function SkillsPanel({ assignments, onAddClick, onRemove }) {
 
 const MinistryManager = () => {
   const { authFetch } = useAuth();
+  const { getUrl } = useApi();
 
   // ── Store ──────────────────────────────────────────────────────────────────
   const storeMinistries    = useAppStore(s => s.ministries);
@@ -513,7 +531,7 @@ const MinistryManager = () => {
 
   const handleAddPerson = async (idMinisterio, uId) => {
     try {
-      const res = await authFetch(`${path}/ministeries/addperson`, {
+      const res = await authFetch(getUrl(`/ministeries/addperson`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idPersona: uId, idMinisterio }),
@@ -527,7 +545,7 @@ const MinistryManager = () => {
   const handleDeleteAssignment = async (mId, sId) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar a esta persona del ministerio?')) return;
     try {
-      const res = await authFetch(`${path}/ministeries/${mId}/personas/${sId}`, { method: 'DELETE' });
+      const res = await authFetch(getUrl(`/ministeries/${mId}/personas/${sId}`), { method: 'DELETE' });
       if (res.ok) {
         removeAssignment(mId); // actualiza el store
       } else {
@@ -551,8 +569,8 @@ const MinistryManager = () => {
 
     setLoading(true);
     Promise.all([
-      authFetch(API_MINISTRIES).then(r => r.json()),
-      authFetch(API_USERS).then(r => r.json()),
+      authFetch(getUrl(`/ministries`)).then(r => r.json()),
+      authFetch(getUrl(`/users`)).then(r => r.json()),
     ])
       .then(([ministriesData, usersData]) => {
         setMinistries(Array.isArray(ministriesData) ? ministriesData : []);
@@ -589,7 +607,7 @@ const requestCordinador = {
   idPersona: idPersona
 };
 
-    return authFetch(`${path}/savecordinador`, {
+    return authFetch(getUrl(`/savecordinador`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestCordinador),
@@ -612,7 +630,10 @@ const requestCordinador = {
       {view === 'create-schedule' && (
         <SchedulePlanner
           ministries={ministries} users={users}
-          onSave={(ev) => {
+          authFetch={authFetch}
+          onSave={(
+            
+            ev) => {
             addEvent(ev);       // guarda en el store
             setActiveTab('schedule'); // navega al tab de schedule
             setView('list');
