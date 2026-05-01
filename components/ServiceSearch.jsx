@@ -560,7 +560,7 @@ function ServiceSearch() {
         if (!data) return;
         data.ministries?.length > 0 ? setService(data) : setNotFound(true);
       })
-      .catch(err => setError('No se pudo cargar la programación: ' + err.message))
+      .catch(err => setError('No se encontro programación para esta fecha: '))
       .finally(() => setLoading(false));
   };
 
