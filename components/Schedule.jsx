@@ -279,8 +279,8 @@ function Schedule() {
   }, []);
 
   if (loading) return <ScheduleLoader />;
-  if (error) return <ScheduleError message={error} />;
-  if (events.length === 0) return <ScheduleEmpty />;
+  //if (error) return <ScheduleError message={error} />;
+  //if (events.length === 0) return <ScheduleEmpty />;
   return <ScheduleView events={events} birthdays={birthdays} />;
 }
 
