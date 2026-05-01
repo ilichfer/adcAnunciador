@@ -482,33 +482,7 @@ function ServiceView({ data, date, onRefresh }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
 
-      {/* Resumen */}
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-indigo-100">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">
-              Programación del servicio
-            </p>
-            <h3 className="text-xl font-black capitalize">{dateLabel}</h3>
-            {data.time && (
-              <p className="text-indigo-200 text-sm mt-1">
-                <i className="far fa-clock mr-1"></i>{data.time}
-              </p>
-            )}
-          </div>
-          <div className="text-right flex-shrink-0">
-            <div className="text-3xl font-black">{totalPersonas}</div>
-            <div className="text-indigo-200 text-xs font-bold uppercase">servidores</div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {ministerios.map((m) => (
-            <span key={`${m.id}-${m.name}`} className="bg-white/15 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full tracking-wide capitalize">
-              {m.name}
-            </span>
-          ))}
-        </div>
-      </div>
+      
 
       {/* Coordinador */}
       {data.coordinator && (
