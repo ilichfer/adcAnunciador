@@ -60,6 +60,8 @@ function MinistryCard({ ministry, onRemove, onManage }) {
 function MinistryDetailsView({ ministry, onBack, onAddAssignment, onRemoveMember }) {
   const [usersByMinistry, setUsersByMinistry] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { getUrl } = useApi();
+
 
   useEffect(() => {
     if (!ministry?.id) return;
