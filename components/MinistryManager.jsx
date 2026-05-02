@@ -57,7 +57,7 @@ function MinistryCard({ ministry, onRemove, onManage }) {
 
 // ─── Vista Detalle de Ministerio ──────────────────────────────────────────────
 
-function MinistryDetailsView({ ministry, onBack, onAddAssignment, onRemoveMember }) {
+function MinistryDetailsView({ ministry, onBack, onAddAssignment, onRemoveMember, onAddPosition }) {
   const [usersByMinistry, setUsersByMinistry] = useState([]);
   const [loading, setLoading] = useState(true);
   const { getUrl } = useApi();
@@ -88,12 +88,20 @@ function MinistryDetailsView({ ministry, onBack, onAddAssignment, onRemoveMember
               <p className="text-sm text-slate-400 font-medium uppercase tracking-widest">Gestión de Personal</p>
             </div>
           </div>
-          <button
-            onClick={() => onAddAssignment(ministry)}
-            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2"
-          >
-            <i className="fas fa-user-plus"></i> Agregar Persona
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onAddPosition(ministry)}
+              className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all flex items-center gap-2"
+            >
+              <i className="fas fa-plus-circle"></i> Agregar Posición
+            </button>
+            <button
+              onClick={() => onAddAssignment(ministry)}
+              className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2"
+            >
+              <i className="fas fa-user-plus"></i> Agregar Persona
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -133,6 +141,43 @@ function MinistryDetailsView({ ministry, onBack, onAddAssignment, onRemoveMember
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Formulario nueva posición ────────────────────────────────────────────────
+
+function AddPositionForm({ ministry, onCancel, onSave }) {
+  const [name, setName] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSave(ministry.id, name.trim());
+  };
+
+  return (
+    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl animate-in fade-in zoom-in duration-300">
+      <h3 className="text-xl font-bold mb-6 text-slate-800">Agregar Nueva Posición a {ministry.name}</h3>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nombre de la Posición</label>
+          <input required autoFocus
+            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none"
+            value={name} onChange={e => setName(e.target.value)}
+            placeholder="Ej: Baterista, Sonidista, etc."
+          />
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" onClick={onCancel} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl">
+            Cancelar
+          </button>
+          <button type="submit" disabled={!name.trim()}
+            className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-40">
+            Agregar Posición
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -531,6 +576,26 @@ const MinistryManager = () => {
     setView('assign');
   };
 
+  const handleOpenAddPosition = (ministry) => {
+    setAddMinistries(ministry);
+    setView('add-position');
+  };
+
+  const handleSavePosition = async (idMinisterio, nombrePosicion) => {
+    try {
+      const res = await authFetch(getUrl(`/ministries/addposition`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idMinisterio, nombrePosicion }),
+      });
+      if (!res.ok) throw new Error();
+      alert('Posición agregada con éxito.');
+      setView('details');
+    } catch (err) {
+      alert('Error: No se pudo agregar la posición.');
+    }
+  };
+
   const handleAddPerson = async (idMinisterio, uId) => {
     try {
       const res = await authFetch(getUrl(`/ministeries/addperson`), {
@@ -658,6 +723,15 @@ const requestCordinador = {
           onBack={() => setView('list')}
           onRemoveMember={handleDeleteAssignment}
           onAddAssignment={handleAddAssignment}
+          onAddPosition={handleOpenAddPosition}
+        />
+      )}
+
+      {view === 'add-position' && addMinistries && (
+        <AddPositionForm
+          ministry={addMinistries}
+          onCancel={() => setView('details')}
+          onSave={handleSavePosition}
         />
       )}
 

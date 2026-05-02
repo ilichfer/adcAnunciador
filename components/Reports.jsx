@@ -105,6 +105,7 @@ function ReportDetails({ data, userName, onBack }) {
               <tr>
                 <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
                 <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha de Registro</th>
+                <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Visualizar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -112,6 +113,23 @@ function ReportDetails({ data, userName, onBack }) {
                 <tr key={record.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 text-sm text-slate-400 font-mono">{idx + 1}</td>
                   <td className="px-6 py-4 text-sm font-bold text-slate-700">{record.fechaCreacion}</td>
+                  <td className="px-6 py-4 text-center">
+                    {record.urlImage ? (
+                      <a 
+                        href={record.urlImage} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-indigo-600 hover:text-indigo-800 transition-colors inline-block"
+                        title="Ver imagen TCD"
+                      >
+                        <i className="fas fa-eye text-base"></i>
+                      </a>
+                    ) : (
+                      <span className="text-slate-300" title="Sin imagen">
+                        <i className="fas fa-eye-slash text-base"></i>
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
