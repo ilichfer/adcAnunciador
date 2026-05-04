@@ -188,15 +188,22 @@ const handleUpdaateFile = () => {
           </div>
         ) : tdcCount &&  (
               <div className="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all group shadow-sm">
-
+                {/* Lógica del badge */}
+                {(() => {
+                  const porcentaje = tdcCount.porcentajeCumplimiento !== undefined ? tdcCount.porcentajeCumplimiento : 0;
+                  const badge = porcentaje === 0 ? { label: 'Sin registros', cls: 'bg-rose-100 text-rose-600' }
+                    : porcentaje >= 80 ? { label: 'Excelente', cls: 'bg-emerald-100 text-emerald-700' }
+                      : porcentaje >= 60 ? { label: 'Regular', cls: 'bg-amber-100 text-amber-700' }
+                        : { label: 'Bajo', cls: 'bg-rose-100 text-rose-600' };
+                  return (
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-slate-800 truncate capitalize text-sm">
                       {authUser.nombre}
                     </span>
                     {/* Opcional: Pequeño indicador de porcentaje a la derecha del nombre */}
-                    <span className="text-[10px] font-medium text-slate-400">
-                      {tdcCount.porcentajeCumplimiento !== undefined ? `${tdcCount.porcentajeCumplimiento}%` : '0%'}
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide ${badge.cls}`}>
+                      {badge.label} {porcentaje}%
                     </span>
                   </div>
 
@@ -208,7 +215,8 @@ const handleUpdaateFile = () => {
                     />
                   </div>
                 </div>
-
+                  );
+                })()}
                 <div className="text-right flex-shrink-0">
                   <div className="text-2xl font-black text-indigo-600 leading-none">
                     {tdcCount.cantidadEntregados !== undefined ? tdcCount.cantidadEntregados : '0'}
