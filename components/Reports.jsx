@@ -44,37 +44,42 @@ function ReportRow({ item, maxCount, onShowDetails }) {
           : { label: 'Bajo', cls: 'bg-rose-100 text-rose-600' };
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all group">
-      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 border border-indigo-200">
-        <span className="text-indigo-600 font-bold text-sm">
-          {item.nombre.charAt(0).toUpperCase()}
-        </span>
-      </div>
-      <div className="flex-grow min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <span className="font-bold text-slate-800 truncate capitalize">{item.nombre}</span>
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide ml-2 flex-shrink-0 ${badge.cls}`}>
-            {badge.label} {item.porcentajeCumplimiento}%
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all group">
+      {/* Avatar e Información Principal */}
+      <div className="flex items-center gap-3 flex-grow min-w-0">
+        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 border border-indigo-200">
+          <span className="text-indigo-600 font-bold text-sm">
+            {item.nombre.charAt(0).toUpperCase()}
           </span>
         </div>
-        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-indigo-500 rounded-full transition-all duration-700 group-hover:bg-indigo-600"
-            style={{ width: `${pct}%` }}
-          />
+        <div className="flex-grow min-w-0">
+          <div className="flex items-center justify-between mb-1 gap-2">
+            <span className="font-bold text-slate-800 truncate capitalize">{item.nombre}</span>
+            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0 ${badge.cls}`}>
+              {badge.label} {item.porcentajeCumplimiento}%
+            </span>
+          </div>
+          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-indigo-500 rounded-full transition-all duration-700 group-hover:bg-indigo-600"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
         </div>
       </div>
-      <div className="text-right flex-shrink-0">
+
+      {/* Contador y Botón de Acción */}
+      <div className="flex items-center justify-between sm:justify-end sm:gap-6 pt-3 sm:pt-0 border-t border-slate-100 sm:border-none">
+        <div className="text-right flex-shrink-0 order-1 sm:order-2">
+          <div className="text-xl sm:text-2xl font-black text-indigo-600 leading-none">{item.cantidadEntregados}</div>
+          <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">subidas</div>
+        </div>
         <button 
           onClick={() => onShowDetails(item.idPersona)}
-          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
+          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100 transition-all order-2 sm:order-1"
         >
           ver mas
         </button>
-      </div>
-      <div className="text-right flex-shrink-0">
-        <div className="text-2xl font-black text-indigo-600">{item.cantidadEntregados}</div>
-        <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">subidas</div>
       </div>
     </div>
   );
