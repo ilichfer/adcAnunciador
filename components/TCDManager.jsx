@@ -196,7 +196,7 @@ const handleUpdaateFile = () => {
                     </span>
                     {/* Opcional: Pequeño indicador de porcentaje a la derecha del nombre */}
                     <span className="text-[10px] font-medium text-slate-400">
-                      {tdcCount.cantidadEntregados !== undefined ? `${tdcCount.cantidadEntregados}%` : '0%'}
+                      {tdcCount.porcentajeCumplimiento !== undefined ? `${tdcCount.porcentajeCumplimiento}%` : '0%'}
                     </span>
                   </div>
 

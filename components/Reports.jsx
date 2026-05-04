@@ -38,9 +38,9 @@ function ReportsEmpty() {
 function ReportRow({ item, maxCount, onShowDetails }) {
   const pct = maxCount > 0 ? Math.round((item.cantidadEntregados / maxCount) * 100) : 0;
   const badge =
-    item.cantidadEntregados === 0 ? { label: 'Sin registros', cls: 'bg-rose-100 text-rose-600' }
-      : item.cantidadEntregados >= 5 ? { label: 'Excelente', cls: 'bg-emerald-100 text-emerald-700' }
-        : item.cantidadEntregados >= 3 ? { label: 'Regular', cls: 'bg-amber-100 text-amber-700' }
+    item.porcentajeCumplimiento === 0 ? { label: 'Sin registros', cls: 'bg-rose-100 text-rose-600' }
+      : item.porcentajeCumplimiento >= 80 ? { label: 'Excelente', cls: 'bg-emerald-100 text-emerald-700' }
+        : item.porcentajeCumplimiento >= 60 ? { label: 'Regular', cls: 'bg-amber-100 text-amber-700' }
           : { label: 'Bajo', cls: 'bg-rose-100 text-rose-600' };
 
   return (
@@ -54,7 +54,7 @@ function ReportRow({ item, maxCount, onShowDetails }) {
         <div className="flex items-center justify-between mb-1">
           <span className="font-bold text-slate-800 truncate capitalize">{item.nombre}</span>
           <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide ml-2 flex-shrink-0 ${badge.cls}`}>
-            {badge.label}
+            {badge.label} {item.porcentajeCumplimiento}%
           </span>
         </div>
         <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
