@@ -292,6 +292,15 @@ function SchedulePlanner({ ministries, users, onSave, onCancel, authFetch }) {
       });
 
       if (res.ok) {
+        const conflicts = await res.json().catch(() => []);
+        if (Array.isArray(conflicts) && conflicts.length > 0) {
+          const names = conflicts
+            .map(item => `${item.nombre} ${item.apellido}`)
+            .join(', ');
+          
+          alert(`Aviso: El servidor (o servidores): ${names} ya tiene más asignaciones para esta fecha.`);
+        }
+
         onSave({
           id: Date.now().toString(),
           date: form.date,
