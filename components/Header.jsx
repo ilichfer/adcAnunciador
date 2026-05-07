@@ -1,3 +1,5 @@
+import NotificationBell from './notifications/NotificationBell';
+
 const Header = ({ onLogout, userName, rol }) => {
   return (
     <header className="bg-white border-b border-slate-200 py-4">
@@ -14,6 +16,7 @@ const Header = ({ onLogout, userName, rol }) => {
 
         {onLogout && (
           <div className="flex items-center gap-3">
+            <NotificationBell />
             {userName && (
               <div className="hidden md:flex items-center gap-2 text-sm text-slate-500">
                 <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">

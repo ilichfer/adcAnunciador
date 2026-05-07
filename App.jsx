@@ -2,7 +2,7 @@
 // ADMIN   → ve todas las vistas
 // SERVIDOR → solo profile, schedule, tcd, reports
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Navbar          from './components/Navbar.jsx';
 import Header          from './components/Header.jsx';
 import Profile         from './components/Profile.jsx';
@@ -18,8 +18,10 @@ import Login           from './components/Login.jsx';
 import LandingPage     from './components/LandingPage.jsx';
 import CoordinatorReport from './components/CoordinatorReport.jsx';
 import BirthdayManager  from './components/BirthdayManager.jsx';
+import NotificationToast from './components/notifications/NotificationToast.jsx';
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
+import { useNotifications } from './hooks/useNotifications.js';
 
 function AppLoader() {
   return (
@@ -52,6 +54,7 @@ const SERVER_TABS = new Set(['profile', 'schedule', 'tcd', 'birthdays']); // 're
 const App = () => {
   const { authUser, logout, isAdmin } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [toastNotification, setToastNotification] = useState(null);
 
   const activeTab    = useAppStore(s => s.activeTab);
   const setActiveTab = useAppStore(s => s.setActiveTab);
@@ -59,6 +62,8 @@ const App = () => {
   const events       = useAppStore(s => s.events);
   const fetchAppData = useAppStore(s => s.fetchAppData);
   const resetAppData = useAppStore(s => s.resetAppData);
+  
+  const { checkAndShowToast } = useNotifications();
 
   // Debug log para monitorear la llegada de eventos desde el Store
   useEffect(() => {
@@ -89,6 +94,32 @@ const App = () => {
     }
   }, [authUser]);
 
+  // Verificar notificaciones y mostrar toast (solo una vez al cargar)
+  const notificationChecked = useRef(false);
+  useEffect(() => {
+    if (authUser && !notificationChecked.current) {
+      notificationChecked.current = true;
+      const loadNotifications = async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/notificaciones/${authUser.id}/no-leidas`, {
+            headers: { 'Authorization': `Bearer ${authUser.token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.length > 0) {
+              setToastNotification(data[0]);
+            }
+          }
+        } catch (err) {
+          console.error('Error notificaciones:', err);
+        }
+      };
+      loadNotifications();
+    }
+  }, [authUser]);
+
+  const closeToast = () => setToastNotification(null);
+
   // Si el tab activo no está permitido para el rol, redirige a schedule
   useEffect(() => {
     if (authUser && !allowedTabs.has(activeTab)) {
@@ -115,6 +146,12 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {toastNotification && (
+        <NotificationToast 
+          notification={toastNotification} 
+          onClose={closeToast} 
+        />
+      )}
       <Header
         onLogout={handleLogout}
         userName={authUser?.nombre}
