@@ -22,6 +22,7 @@ import NotificationToast from './components/notifications/NotificationToast.jsx'
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
 import { useNotifications } from './hooks/useNotifications.js';
+import { useApi } from './components/useApi.js';
 
 function AppLoader() {
   return (
@@ -55,6 +56,7 @@ const App = () => {
   const { authUser, logout, isAdmin } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [toastNotification, setToastNotification] = useState(null);
+  const { getUrl } = useApi();
 
   const activeTab    = useAppStore(s => s.activeTab);
   const setActiveTab = useAppStore(s => s.setActiveTab);
@@ -101,7 +103,7 @@ const App = () => {
       notificationChecked.current = true;
       const loadNotifications = async () => {
         try {
-          const res = await fetch(`http://localhost:5000/api/notificaciones/${authUser.id}/no-leidas`, {
+          const res = await fetch(getUrl(`/notificaciones/${authUser.id}/no-leidas`), {
             headers: { 'Authorization': `Bearer ${authUser.token}` }
           });
           if (res.ok) {
