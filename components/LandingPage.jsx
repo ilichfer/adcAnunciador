@@ -73,7 +73,7 @@ function TCDGallery({ isVisible }) {
         onMouseLeave={handleMouseUp}
       >
         <img
-          src="https://pub-becb4bed35ee4164bb962059a8a24532.r2.dev/tdcMensual.jpeg"
+          src="https://pub-becb4bed35ee4164bb962059a8a24532.r2.dev/tcdMayo.jpeg"
           alt="Reporte TCD Mensual"
           className="max-w-full h-auto block select-none pointer-events-none transition-transform duration-200 ease-out origin-center"
           style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }}
