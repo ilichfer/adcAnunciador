@@ -129,10 +129,68 @@ function TCDCard({ entry }) {
   );
 }
 
+// ─── Detalle de TCD por persona (Replica de la lógica de Reports) ───────────
 
+function TCDDetails({ data, userName, onBack }) {
+  return (
+    <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4">
+      <div className="flex items-center gap-3 mb-6">
+        <button 
+          onClick={onBack}
+          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"
+          title="Volver"
+        >
+          <i className="fas fa-chevron-left"></i>
+        </button>
+        <div>
+          <h3 className="text-xl font-bold text-slate-800">Registros TCD</h3>
+          <p className="text-sm text-slate-400">Usuario: <span className="capitalize font-medium text-slate-600">{userName}</span></p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
+                <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha de Registro</th>
+                <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Visualizar</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {data.map((record, idx) => (
+                <tr key={record.id || idx} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-slate-400 font-mono">{idx + 1}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-700">{record.fechaCreacion || record.date}</td>
+                  <td className="px-6 py-4 text-center">
+                    {(record.urlImage || record.image) ? (
+                      <a 
+                        href={record.urlImage || record.image} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-indigo-600 hover:text-indigo-800 transition-colors inline-block"
+                        title="Ver imagen TCD"
+                      >
+                        <i className="fas fa-eye text-base"></i>
+                      </a>
+                    ) : (
+                      <span className="text-slate-300" title="Sin imagen">
+                        <i className="fas fa-eye-slash text-base"></i>
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-
 const TCDManager = () => {
   const { authUser, authFetch } = useAuth();
   const { getUrl } = useApi();
@@ -147,11 +205,38 @@ const TCDManager = () => {
   // ── Estado local: solo UI ──────────────────────────────────────────────────
   const [range, setRange] = useState({ start: '', end: '' });
   
+  const [details, setDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+
   const [updateFile, setUpdateFile] = useState(false);
 
 const handleUpdaateFile = () => {
     setUpdateFile(true);
   }
+
+  const handleShowDetails = async () => {
+    setDetailsLoading(true);
+    try {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      const start = range.start || firstDay;
+      const end = range.end || lastDay;
+
+      const res = await fetch(getUrl(`/findTcdPerson?idPersona=${authUser.id}&fechaInicio=${start}&fechaFin=${end}`), {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('No se pudo obtener el detalle');
+      const data = await res.json();
+      setDetails(Array.isArray(data) ? data : []);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
 
   const filtered = tcdEntries.filter(entry => {
     if (!range.start || !range.end) return true;
@@ -217,12 +302,20 @@ const handleUpdaateFile = () => {
                 </div>
                   );
                 })()}
-                <div className="text-right flex-shrink-0">
-                  <div className="text-2xl font-black text-indigo-600 leading-none">
-                    {tdcCount.cantidadEntregados !== undefined ? tdcCount.cantidadEntregados : '0'}
-                  </div>
-                  <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">
-                    subidas
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <button 
+                    onClick={handleShowDetails}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
+                  >
+                    ver mas
+                  </button>
+                  <div className="text-right">
+                    <div className="text-2xl font-black text-indigo-600 leading-none">
+                      {tdcCount.cantidadEntregados !== undefined ? tdcCount.cantidadEntregados : '0'}
+                    </div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">
+                      subidas
+                    </div>
                   </div>
                 </div>
 
@@ -234,7 +327,14 @@ const handleUpdaateFile = () => {
 
         </div>
 
-        {filtered.length === 0 ? (
+        {detailsLoading ? (
+          <div className="text-center py-14 text-slate-400">
+            <i className="fas fa-spinner fa-spin text-2xl mb-3 block text-indigo-400"></i>
+            <p className="text-sm">Consultando registros...</p>
+          </div>
+        ) : details ? (
+          <TCDDetails data={details} userName={authUser.nombre} onBack={() => setDetails(null)} />
+        ) : filtered.length === 0 ? (
           <EmptyTCD />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
