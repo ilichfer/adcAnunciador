@@ -47,7 +47,10 @@ function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
       formData.append('image', file);
       formData.append('idPersona', currentUser.id);
       const res = await fetch(getUrl('/upload'), { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Error al subir la imagen');
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || 'Error al subir la imagen');
+      }
       const imageUrl = await res.text();
       onUpload({
         userId: currentUser.id,
@@ -59,7 +62,7 @@ function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
       setPreview(null);
       onUpdateFile();
     } catch (err) {
-      setError(err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
