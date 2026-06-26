@@ -59,7 +59,7 @@ function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
       setPreview(null);
       onUpdateFile();
     } catch (err) {
-      setError('Su TCD ya fue subido el dia de hoy.');
+      setError(err);
     } finally {
       setLoading(false);
     }
