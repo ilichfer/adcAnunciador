@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { API_BASE } from './useApi.js';
 
 
 // ─── Servicio de imágenes ─────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ import { useState, useEffect, useCallback } from 'react';
 // Por ahora el fetch trae las URLs directamente del endpoint existente.
 // Cuando integres un CDN, solo cambia la función `buildImageUrl` abajo.
 
-function TCDGallery({ isVisible }) {
+function TCDGallery({ isVisible, imageUrl, loading, error, mes, anio }) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -34,7 +35,31 @@ function TCDGallery({ isVisible }) {
 
   if (!isVisible) return null;
 
-  // Iniciar el arrastre (solo si hay zoom)
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="mx-auto max-w-3xl">
+          <div className="h-[500px] bg-slate-200 rounded-3xl border-8 border-white shadow-2xl" />
+        </div>
+        <div className="mt-6 flex justify-center">
+          <div className="h-8 w-44 bg-slate-200 rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !imageUrl) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i className="fas fa-image text-slate-300 text-3xl"></i>
+        </div>
+        <p className="text-slate-400 font-medium">Reporte del mes no disponible</p>
+        <p className="text-slate-300 text-sm mt-1">Pronto estará disponible</p>
+      </div>
+    );
+  }
+
   const handleMouseDown = (e) => {
     if (scale === 1) return;
     setIsDragging(true);
@@ -44,7 +69,6 @@ function TCDGallery({ isVisible }) {
     });
   };
 
-  // Actualizar posición mientras se arrastra
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     setPosition({
@@ -55,11 +79,9 @@ function TCDGallery({ isVisible }) {
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Control manual de zoom
   const handleZoom = (delta) => {
     setScale((prev) => {
       const newScale = Math.min(Math.max(1, prev + delta), 4);
-      // Si volvemos al tamaño original, centramos la imagen
       if (newScale === 1) setPosition({ x: 0, y: 0 });
       return newScale;
     });
@@ -73,15 +95,14 @@ function TCDGallery({ isVisible }) {
         onMouseLeave={handleMouseUp}
       >
         <img
-          src="https://pub-becb4bed35ee4164bb962059a8a24532.r2.dev/tcdMayo.jpeg"
-          alt="Reporte TCD Mensual"
+          src={imageUrl}
+          alt={`Reporte TCD Mensual - ${mes}/${anio}`}
           className="max-w-full h-auto block select-none pointer-events-none transition-transform duration-200 ease-out origin-center"
           style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }}
           onContextMenu={(e) => e.preventDefault()}
           onDragStart={(e) => e.preventDefault()}
         />
 
-        {/* Capa protectora para evitar clic derecho y arrastre */}
         <div 
           className="absolute inset-0 z-10"
           onMouseDown={handleMouseDown}
@@ -89,7 +110,6 @@ function TCDGallery({ isVisible }) {
           onContextMenu={(e) => e.preventDefault()}
         ></div>
 
-        {/* Controles Flotantes */}
         <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2">
           <button 
             onClick={() => handleZoom(0.5)}
@@ -125,10 +145,93 @@ function TCDGallery({ isVisible }) {
   );
 }
 
+function ContactForm() {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [mensaje, setMensaje] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!nombre.trim() || !email.trim() || !mensaje.trim()) {
+      setError('Todos los campos son obligatorios');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/contacto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre.trim(), email: email.trim(), asunto: 'Contacto desde web', mensaje: mensaje.trim() })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Error al enviar mensaje');
+      }
+      setSuccess(true);
+      setNombre('');
+      setEmail('');
+      setMensaje('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="text-center py-12 animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i className="fas fa-check text-emerald-400 text-3xl"></i>
+        </div>
+        <h3 className="text-2xl font-bold mb-2">¡Mensaje Enviado!</h3>
+        <p className="text-slate-400 mb-6">Gracias por contactarnos. Te responderemos pronto.</p>
+        <button onClick={() => setSuccess(false)} className="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 rounded-2xl font-bold transition-all">Enviar otro mensaje</button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-medium">{error}</div>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" placeholder="Tu Nombre" required value={nombre} onChange={e => setNombre(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
+        <input type="email" placeholder="Tu Correo" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
+      </div>
+      <textarea rows="4" placeholder="Tu Mensaje" required value={mensaje} onChange={e => setMensaje(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500 resize-none"></textarea>
+      <button disabled={loading} className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 px-10 py-4 rounded-2xl font-black uppercase tracking-widest w-full md:w-auto transition-all flex items-center justify-center gap-3">
+        {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span>Enviando...</span></> : 'Enviar Mensaje'}
+      </button>
+    </form>
+  );
+}
+
 const LandingPage = ({ onLoginClick }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showTcdReport, setShowTcdReport] = useState(false);
+  const [tcdImageUrl, setTcdImageUrl] = useState(null);
+  const [tcdLoading, setTcdLoading] = useState(true);
+  const [tcdError, setTcdError] = useState(false);
+  const [tcdMes, setTcdMes] = useState(null);
+  const [tcdAnio, setTcdAnio] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/imagen-mensual/tcd`)
+      .then(r => { if (!r.ok) throw new Error('No disponible'); return r.json(); })
+      .then(data => {
+        setTcdImageUrl(data.url);
+        setTcdMes(data.mes);
+        setTcdAnio(data.anio);
+        setTcdError(false);
+      })
+      .catch(() => setTcdError(true))
+      .finally(() => setTcdLoading(false));
+  }, []);
 
   const slides = [
     { url: '/img/unidos.jpeg' },
@@ -290,7 +393,7 @@ const LandingPage = ({ onLoginClick }) => {
           {showTcdReport ? 'Ocultar TCD' : 'Ver TCD Mensual'}
         </button>
 
-        <TCDGallery isVisible={showTcdReport} />
+        <TCDGallery isVisible={showTcdReport} imageUrl={tcdImageUrl} loading={tcdLoading} error={tcdError} mes={tcdMes} anio={tcdAnio} />
       </section>
 
       {/* --- Sección Videos --- */}
@@ -360,16 +463,7 @@ const LandingPage = ({ onLoginClick }) => {
                 <p className="text-slate-400 mt-2">¡Nos encantaría conocerte! Escríbenos.</p>
               </div>
               
-              <form className="space-y-4" onSubmit={e => e.preventDefault()}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="text" placeholder="Tu Nombre" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
-                  <input type="email" placeholder="Tu Correo" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
-                </div>
-                <textarea rows="4" placeholder="Tu Mensaje" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500 resize-none"></textarea>
-                <button className="bg-indigo-600 hover:bg-indigo-700 px-10 py-4 rounded-2xl font-black uppercase tracking-widest w-full md:w-auto transition-all">
-                  Enviar Mensaje
-                </button>
-              </form>
+              <ContactForm />
             </div>
 
             {/* Mapa */}
