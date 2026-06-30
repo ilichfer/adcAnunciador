@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { API_BASE } from './useApi.js';
 
 
 // ─── Servicio de imágenes ─────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ import { useState, useEffect, useCallback } from 'react';
 // Por ahora el fetch trae las URLs directamente del endpoint existente.
 // Cuando integres un CDN, solo cambia la función `buildImageUrl` abajo.
 
-function TCDGallery({ isVisible }) {
+function TCDGallery({ isVisible, imageUrl, loading, error, mes, anio }) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -34,7 +35,31 @@ function TCDGallery({ isVisible }) {
 
   if (!isVisible) return null;
 
-  // Iniciar el arrastre (solo si hay zoom)
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="mx-auto max-w-3xl">
+          <div className="h-[500px] bg-slate-200 rounded-3xl border-8 border-white shadow-2xl" />
+        </div>
+        <div className="mt-6 flex justify-center">
+          <div className="h-8 w-44 bg-slate-200 rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !imageUrl) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i className="fas fa-image text-slate-300 text-3xl"></i>
+        </div>
+        <p className="text-slate-400 font-medium">Reporte del mes no disponible</p>
+        <p className="text-slate-300 text-sm mt-1">Pronto estará disponible</p>
+      </div>
+    );
+  }
+
   const handleMouseDown = (e) => {
     if (scale === 1) return;
     setIsDragging(true);
@@ -44,7 +69,6 @@ function TCDGallery({ isVisible }) {
     });
   };
 
-  // Actualizar posición mientras se arrastra
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     setPosition({
@@ -55,11 +79,9 @@ function TCDGallery({ isVisible }) {
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Control manual de zoom
   const handleZoom = (delta) => {
     setScale((prev) => {
       const newScale = Math.min(Math.max(1, prev + delta), 4);
-      // Si volvemos al tamaño original, centramos la imagen
       if (newScale === 1) setPosition({ x: 0, y: 0 });
       return newScale;
     });
@@ -73,15 +95,14 @@ function TCDGallery({ isVisible }) {
         onMouseLeave={handleMouseUp}
       >
         <img
-          src="https://pub-becb4bed35ee4164bb962059a8a24532.r2.dev/tcdMayo.jpeg"
-          alt="Reporte TCD Mensual"
+          src={imageUrl}
+          alt={`Reporte TCD Mensual - ${mes}/${anio}`}
           className="max-w-full h-auto block select-none pointer-events-none transition-transform duration-200 ease-out origin-center"
           style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }}
           onContextMenu={(e) => e.preventDefault()}
           onDragStart={(e) => e.preventDefault()}
         />
 
-        {/* Capa protectora para evitar clic derecho y arrastre */}
         <div 
           className="absolute inset-0 z-10"
           onMouseDown={handleMouseDown}
@@ -89,7 +110,6 @@ function TCDGallery({ isVisible }) {
           onContextMenu={(e) => e.preventDefault()}
         ></div>
 
-        {/* Controles Flotantes */}
         <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2">
           <button 
             onClick={() => handleZoom(0.5)}
@@ -129,6 +149,24 @@ const LandingPage = ({ onLoginClick }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showTcdReport, setShowTcdReport] = useState(false);
+  const [tcdImageUrl, setTcdImageUrl] = useState(null);
+  const [tcdLoading, setTcdLoading] = useState(true);
+  const [tcdError, setTcdError] = useState(false);
+  const [tcdMes, setTcdMes] = useState(null);
+  const [tcdAnio, setTcdAnio] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/imagen-mensual/tcd`)
+      .then(r => { if (!r.ok) throw new Error('No disponible'); return r.json(); })
+      .then(data => {
+        setTcdImageUrl(data.url);
+        setTcdMes(data.mes);
+        setTcdAnio(data.anio);
+        setTcdError(false);
+      })
+      .catch(() => setTcdError(true))
+      .finally(() => setTcdLoading(false));
+  }, []);
 
   const slides = [
     { url: '/img/unidos.jpeg' },
@@ -290,7 +328,7 @@ const LandingPage = ({ onLoginClick }) => {
           {showTcdReport ? 'Ocultar TCD' : 'Ver TCD Mensual'}
         </button>
 
-        <TCDGallery isVisible={showTcdReport} />
+        <TCDGallery isVisible={showTcdReport} imageUrl={tcdImageUrl} loading={tcdLoading} error={tcdError} mes={tcdMes} anio={tcdAnio} />
       </section>
 
       {/* --- Sección Videos --- */}

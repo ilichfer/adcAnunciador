@@ -42,7 +42,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
     { id: 'service-search', label: 'Consultar Servicios', icon: 'fa-search' },
     { id: 'ministries',     label: 'Ministerios',         icon: 'fa-sitemap' },
     { id: 'users',          label: 'Usuarios',            icon: 'fa-users' },
-    { id: 'contact',        label: 'Contacto',            icon: 'fa-envelope' },
+    { id: 'monthly-image',  label: 'Imagen del Mes',       icon: 'fa-image' },
   ];
 
   // Lista final según rol

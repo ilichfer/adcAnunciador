@@ -18,6 +18,7 @@ import Login           from './components/Login.jsx';
 import LandingPage     from './components/LandingPage.jsx';
 import CoordinatorReport from './components/CoordinatorReport.jsx';
 import BirthdayManager  from './components/BirthdayManager.jsx';
+import MonthlyImageManager from './components/MonthlyImageManager.jsx';
 import NotificationToast from './components/notifications/NotificationToast.jsx';
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
@@ -49,7 +50,7 @@ function Unauthorized() {
 }
 
 // ── Tabs permitidos por rol ───────────────────────────────────────────────────
-const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'contact', 'birthdays']);
+const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'birthdays', 'monthly-image']);
 const SERVER_TABS = new Set(['profile', 'schedule', 'tcd', 'birthdays']); // 'reports' solo ADMIN
 
 const App = () => {
@@ -176,7 +177,7 @@ const App = () => {
         {currentTab === 'service-search' && (canView('service-search') ? <ServiceSearch />   : <Unauthorized />)}
         {currentTab === 'users'          && (canView('users')          ? <UsersManager />    : <Unauthorized />)}
         {currentTab === 'ministries'     && (canView('ministries')     ? <MinistryManager /> : <Unauthorized />)}
-        {currentTab === 'contact'        && (canView('contact')        ? <Contact />         : <Unauthorized />)}
+        {currentTab === 'monthly-image'  && (canView('monthly-image')  ? <MonthlyImageManager /> : <Unauthorized />)}
 
       </main>
 
