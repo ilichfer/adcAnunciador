@@ -145,6 +145,71 @@ function TCDGallery({ isVisible, imageUrl, loading, error, mes, anio }) {
   );
 }
 
+function ContactForm() {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [mensaje, setMensaje] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!nombre.trim() || !email.trim() || !mensaje.trim()) {
+      setError('Todos los campos son obligatorios');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/contacto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre.trim(), email: email.trim(), asunto: 'Contacto desde web', mensaje: mensaje.trim() })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Error al enviar mensaje');
+      }
+      setSuccess(true);
+      setNombre('');
+      setEmail('');
+      setMensaje('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="text-center py-12 animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i className="fas fa-check text-emerald-400 text-3xl"></i>
+        </div>
+        <h3 className="text-2xl font-bold mb-2">¡Mensaje Enviado!</h3>
+        <p className="text-slate-400 mb-6">Gracias por contactarnos. Te responderemos pronto.</p>
+        <button onClick={() => setSuccess(false)} className="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 rounded-2xl font-bold transition-all">Enviar otro mensaje</button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-medium">{error}</div>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" placeholder="Tu Nombre" required value={nombre} onChange={e => setNombre(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
+        <input type="email" placeholder="Tu Correo" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
+      </div>
+      <textarea rows="4" placeholder="Tu Mensaje" required value={mensaje} onChange={e => setMensaje(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500 resize-none"></textarea>
+      <button disabled={loading} className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 px-10 py-4 rounded-2xl font-black uppercase tracking-widest w-full md:w-auto transition-all flex items-center justify-center gap-3">
+        {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span>Enviando...</span></> : 'Enviar Mensaje'}
+      </button>
+    </form>
+  );
+}
+
 const LandingPage = ({ onLoginClick }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -398,16 +463,7 @@ const LandingPage = ({ onLoginClick }) => {
                 <p className="text-slate-400 mt-2">¡Nos encantaría conocerte! Escríbenos.</p>
               </div>
               
-              <form className="space-y-4" onSubmit={e => e.preventDefault()}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="text" placeholder="Tu Nombre" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
-                  <input type="email" placeholder="Tu Correo" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500" />
-                </div>
-                <textarea rows="4" placeholder="Tu Mensaje" required className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-500 resize-none"></textarea>
-                <button className="bg-indigo-600 hover:bg-indigo-700 px-10 py-4 rounded-2xl font-black uppercase tracking-widest w-full md:w-auto transition-all">
-                  Enviar Mensaje
-                </button>
-              </form>
+              <ContactForm />
             </div>
 
             {/* Mapa */}
