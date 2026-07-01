@@ -485,25 +485,37 @@ function ServiceView({ data, date, onRefresh }) {
       
 
       {/* Coordinador */}
-      {data.coordinator && (
-        <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
-              <i className="fas fa-user-shield text-white text-sm"></i>
+      {data.coordinator ? (
+        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+                <i className="fas fa-user-shield text-white text-sm"></i>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Coordinador General</p>
+                <p className="font-bold text-slate-800">{data.coordinator?.name ?? data.coordinator}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Coordinador General</p>
-              <p className="font-bold text-slate-800">{data.coordinator?.name ?? data.coordinator}</p>
-            </div>
+            <button
+              onClick={() => setEditingCoord(true)}
+              className="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-colors border border-emerald-200"
+            >
+              <i className="fas fa-user-edit mr-1"></i> Editar
+            </button>
           </div>
-          <button
-            onClick={() => setEditingCoord(true)}
-            className="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-colors border border-emerald-200"
-          >
-            <i className="fas fa-user-edit mr-1"></i> Editar
-          </button>
+          {data.coordinator.notasServicio ? (
+            <div className="bg-white border border-emerald-100 rounded-xl p-3">
+              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1">Mensaje del Coordinador</p>
+              <p className="text-sm text-slate-700 whitespace-pre-wrap">{data.coordinator.notasServicio}</p>
+            </div>
+          ) : (
+            <div className="bg-white border border-emerald-100 rounded-xl p-3">
+              <p className="text-sm text-slate-400 italic">No hay mensaje por parte del coordinador</p>
+            </div>
+          )}
         </div>
-      )}
+      ) : null}
 
       {/* Grilla de ministerios */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
