@@ -32,13 +32,15 @@ function EmptyUsers() {
 
 // ─── Fila de usuario ──────────────────────────────────────────────────────────
 
-function UserRow({ user, onToggleStatus }) {
+function UserRow({ user, onToggleStatus, onRoleChange }) {
   const initials = (user.name ?? '?')
     .split(' ')
     .map(w => w[0])
     .slice(0, 2)
     .join('')
     .toUpperCase();
+
+  const idRolActual = user.role === 'ADMINISTRADOR' ? 1 : 2;
 
   return (
     <tr className={`${user.active ? 'hover:bg-slate-50/50' : 'bg-slate-50 opacity-60'} transition-colors`}>
@@ -63,9 +65,14 @@ function UserRow({ user, onToggleStatus }) {
       </td>
       <td className="px-6 py-4">
         <div className="text-sm font-semibold text-slate-700">{user.ministry ?? '—'}</div>
-        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 mt-1 inline-block">
-          {user.role ?? 'Servidor'}
-        </span>
+        <select
+          value={idRolActual}
+          onChange={e => onRoleChange(user.id, parseInt(e.target.value))}
+          className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 mt-1 outline-none cursor-pointer"
+        >
+          <option value={2}>Servidor</option>
+          <option value={1}>Administrador</option>
+        </select>
       </td>
       <td className="px-6 py-4 text-center">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -213,6 +220,32 @@ const UsersManager = () => {
     }
   };
 
+  const handleRolChange = async (idPersona, newIdRol) => {
+    const targetUser = users.find(u => u.id === idPersona);
+    if (!targetUser) return;
+
+    const nuevoRolLabel = newIdRol === 1 ? 'Administrador' : 'Servidor';
+    if (!window.confirm(`¿Estás seguro de cambiar el rol de "${targetUser.name}" a ${nuevoRolLabel}?`)) return;
+
+    try {
+      const res = await authFetch(getUrl(`/personas/${idPersona}/rol?idRol=${newIdRol}`), { method: 'PUT' });
+      if (res.ok) {
+        // Refrescar lista completa desde el servidor
+        const refreshRes = await authFetch(getUrl('/users'));
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          setUsers(Array.isArray(data) ? data : data.users ?? []);
+        }
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error: ${errorData.message || 'No se pudo cambiar el rol.'}`);
+      }
+    } catch (err) {
+      console.error('Error al cambiar rol:', err);
+      alert('Error de conexión con el servidor.');
+    }
+  };
+
   const handleAdd = (newUser) => {
     addUser(newUser);     // agrega al store
     setShowForm(false);
@@ -277,8 +310,8 @@ const UsersManager = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {users.map(user => (
-                  <UserRow key={user.id} user={user} onToggleStatus={handleToggle} />
+                  {users.map(user => (
+                  <UserRow key={user.id} user={user} onToggleStatus={handleToggle} onRoleChange={handleRolChange} />
                 ))}
               </tbody>
             </table>
