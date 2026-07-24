@@ -181,7 +181,7 @@ function MiProgramacion({ schedule, loading, error, onConsultar }) {
 
 // ─── Vista del perfil ─────────────────────────────────────────────────────────
 
-function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsultar }) {
+function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsultar, notasHistorico }) {
   const ministerios = useMemo(() => {
     if (!user?.ministry) return [];
     if (Array.isArray(user.ministry)) return user.ministry;
@@ -262,6 +262,93 @@ function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsult
 
       {/* Programación */}
       <MiProgramacion schedule={schedule} loading={scheduleLoading} error={scheduleError} onConsultar={onConsultar} />
+
+      {/* Historico de Notas */}
+      {notasHistorico.length > 0 && (() => {
+        const agrupado = {};
+        notasHistorico.forEach(n => {
+          const fechaStr = n.curso?.fechaInicio || '';
+          let year = new Date().getFullYear();
+          let semestre = 1;
+          if (fechaStr) {
+            const parts = fechaStr.split(/[-/]/);
+            if (parts.length >= 1) year = parseInt(parts[0]) || year;
+            if (parts.length >= 2) {
+              const mes = parseInt(parts[1]) || 1;
+              semestre = mes <= 6 ? 1 : 2;
+            }
+          }
+          if (!agrupado[year]) agrupado[year] = { s1: [], s2: [] };
+          if (semestre === 1) agrupado[year].s1.push(n);
+          else agrupado[year].s2.push(n);
+        });
+        const years = Object.keys(agrupado).sort((a, b) => b - a);
+
+        const colorBg = (nf) => nf >= 4.7 ? 'bg-emerald-50' : nf < 3 ? 'bg-rose-50' : 'bg-amber-50';
+        const colorTxt = (nf) => nf >= 4.7 ? 'text-emerald-700' : nf < 3 ? 'text-rose-700' : 'text-amber-700';
+
+        const SemestreTabla = ({ notas, semestreLabel }) => {
+          if (notas.length === 0) return null;
+          return (
+            <div className="mb-4">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{semestreLabel}</p>
+              <div className="overflow-x-auto rounded-xl border border-slate-100">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <th className="px-4 py-2.5 text-left">Curso</th>
+                      <th className="px-3 py-2.5 text-center">Maestro<br/><span className="font-normal normal-case">(30%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Asistencia<br/><span className="font-normal normal-case">(20%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Practica<br/><span className="font-normal normal-case">(20%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Examen<br/><span className="font-normal normal-case">(30%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Final</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {notas.map((n, idx) => {
+                      const nf = n.notaFinal ?? 0;
+                      return (
+                        <tr key={idx} className={`${colorBg(nf)} transition-colors`}>
+                          <td className="px-4 py-2.5 font-bold text-slate-800">{n.curso?.nombreCurso ?? '—'}</td>
+                          <td className="px-3 py-2.5 text-center font-bold text-slate-700">{n.notaMaestro ?? 0}</td>
+                          <td className="px-3 py-2.5 text-center font-bold text-slate-700">{n.notaAsistencia ?? 0}</td>
+                          <td className="px-3 py-2.5 text-center font-bold text-slate-700">{n.notaPractica ?? 0}</td>
+                          <td className="px-3 py-2.5 text-center font-bold text-slate-700">{n.notaExamenFinal ?? 0}</td>
+                          <td className={`px-3 py-2.5 text-center font-black ${colorTxt(nf)}`}>{nf.toFixed(2)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h3 className="text-lg font-semibold mb-5 flex items-center gap-2">
+              <i className="fas fa-clipboard-list text-indigo-500"></i>Mis Notas
+            </h3>
+            <div className="space-y-6">
+              {years.map(year => (
+                <div key={year}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                      <span className="text-white font-black text-sm">{year}</span>
+                    </div>
+                    <h4 className="text-xl font-black text-slate-800">{year}</h4>
+                  </div>
+                  <div className="ml-[52px] space-y-4">
+                    <SemestreTabla notas={agrupado[year].s1} semestreLabel="Primer Semestre (Ene - Jun)" />
+                    <SemestreTabla notas={agrupado[year].s2} semestreLabel="Segundo Semestre (Jul - Dic)" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -282,6 +369,7 @@ const Profile = () => {
   const [schedule, setSchedule] = useState([]);
   const [scheduleLoading, setSchLoading] = useState(true);
   const [scheduleError, setSchError] = useState(false);
+  const [notasHistorico, setNotasHistorico] = useState([]);
 
   // Estados para la vista de detalle
   const [view, setView] = useState('profile'); // 'profile' | 'detail'
@@ -337,6 +425,14 @@ const Profile = () => {
       .finally(() => setSchLoading(false));
   }, [authUser?.id]);
 
+  useEffect(() => {
+    if (!authUser?.id) return;
+    fetch(getUrl(`/personas/${authUser.id}/notas-historico`))
+      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
+      .then(json => setNotasHistorico(Array.isArray(json) ? json : []))
+      .catch(() => setNotasHistorico([]));
+  }, [authUser?.id]);
+
   if (loading || detailLoading) return <ProfileLoader />;
   if (!user) return null;
 
@@ -351,6 +447,7 @@ const Profile = () => {
       scheduleLoading={scheduleLoading}
       scheduleError={scheduleError}
       onConsultar={handleConsultar}
+      notasHistorico={notasHistorico}
     />
   );
 };

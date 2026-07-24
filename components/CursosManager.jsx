@@ -15,7 +15,16 @@ function CursoFormModal({ curso, onClose, onSave }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setForm(curso || { ...EMPTY_CURSO });
+    if (curso) {
+      setForm({
+        ...curso,
+        profesor: typeof curso.profesor === 'object' && curso.profesor !== null
+          ? curso.profesor.id
+          : (curso.profesor || 0),
+      });
+    } else {
+      setForm({ ...EMPTY_CURSO });
+    }
   }, [curso]);
 
   const set = (key) => (e) => {
@@ -34,10 +43,20 @@ function CursoFormModal({ curso, onClose, onSave }) {
     try {
       const method = form.id ? 'PUT' : 'POST';
       const url = form.id ? `/cursos/${form.id}` : '/cursos';
+      const body = {
+        id: form.id || 0,
+        nombreCurso: form.nombreCurso,
+        fechaInicio: form.fechaInicio,
+        fechaFin: form.fechaFin || '',
+        valorTotal: form.valorTotal || 0,
+        check: form.check || false,
+        profesor: typeof form.profesor === 'object' && form.profesor !== null
+          ? form.profesor.id : (parseInt(form.profesor) || 0),
+      };
       const res = await authFetch(getUrl(url), {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(body)
       });
       if (!res.ok) {
         const err = await res.text();
