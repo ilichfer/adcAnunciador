@@ -182,6 +182,7 @@ function MiProgramacion({ schedule, loading, error, onConsultar }) {
 // ─── Vista del perfil ─────────────────────────────────────────────────────────
 
 function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsultar, notasHistorico }) {
+  const pesosNota = useAppStore(s => s.pesosNota);
   const ministerios = useMemo(() => {
     if (!user?.ministry) return [];
     if (Array.isArray(user.ministry)) return user.ministry;
@@ -297,10 +298,10 @@ function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsult
                   <thead>
                     <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       <th className="px-4 py-2.5 text-left">Curso</th>
-                      <th className="px-3 py-2.5 text-center">Maestro<br/><span className="font-normal normal-case">(30%)</span></th>
-                      <th className="px-3 py-2.5 text-center">Asistencia<br/><span className="font-normal normal-case">(20%)</span></th>
-                      <th className="px-3 py-2.5 text-center">Practica<br/><span className="font-normal normal-case">(20%)</span></th>
-                      <th className="px-3 py-2.5 text-center">Examen<br/><span className="font-normal normal-case">(30%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Maestro<br/><span className="font-normal normal-case">({pesosNota.PESO_MAESTRO || 30}%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Asistencia<br/><span className="font-normal normal-case">({pesosNota.PESO_ASISTENCIA || 20}%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Practica<br/><span className="font-normal normal-case">({pesosNota.PESO_PRACTICA || 20}%)</span></th>
+                      <th className="px-3 py-2.5 text-center">Examen<br/><span className="font-normal normal-case">({pesosNota.PESO_EXAMEN || 30}%)</span></th>
                       <th className="px-3 py-2.5 text-center">Final</th>
                     </tr>
                   </thead>

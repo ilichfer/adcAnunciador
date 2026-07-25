@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useApi } from '../components/useApi.js';
+import { useAppStore } from '../store/UseAppStore.jsx';
 
 const colorBg = (colorCelda) => {
   if (colorCelda === 1) return 'bg-emerald-50 border-emerald-200';
@@ -19,6 +20,7 @@ const colorText = (colorCelda) => {
 function NotaModal({ estudiante, onClose, onSave }) {
   const { authFetch } = useAuth();
   const { getUrl } = useApi();
+  const pesosNota = useAppStore(s => s.pesosNota);
   const [form, setForm] = useState({
     notaMaestro: estudiante.notaMaestro || 0,
     notaAsistencia: estudiante.notaAsistencia || 0,
@@ -28,7 +30,11 @@ function NotaModal({ estudiante, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const notaFinal = (form.notaMaestro * 0.3 + form.notaAsistencia * 0.2 + form.notaPractica * 0.2 + form.notaExamenFinal * 0.3).toFixed(2);
+  const pesoM = (pesosNota.PESO_MAESTRO || 30) / 100;
+  const pesoA = (pesosNota.PESO_ASISTENCIA || 20) / 100;
+  const pesoP = (pesosNota.PESO_PRACTICA || 20) / 100;
+  const pesoE = (pesosNota.PESO_EXAMEN || 30) / 100;
+  const notaFinal = (form.notaMaestro * pesoM + form.notaAsistencia * pesoA + form.notaPractica * pesoP + form.notaExamenFinal * pesoE).toFixed(2);
 
   const set = (key) => (e) => {
     let val = parseFloat(e.target.value) || 0;
@@ -76,19 +82,19 @@ function NotaModal({ estudiante, onClose, onSave }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className={labelClass}>Maestro (30%)</label>
+              <label className={labelClass}>Maestro ({pesosNota.PESO_MAESTRO || 30}%)</label>
               <input type="number" step="0.1" min="0" max="5" className={inputClass} value={form.notaMaestro} onChange={set('notaMaestro')} />
             </div>
             <div className="space-y-1">
-              <label className={labelClass}>Asistencia (20%)</label>
+              <label className={labelClass}>Asistencia ({pesosNota.PESO_ASISTENCIA || 20}%)</label>
               <input type="number" step="0.1" min="0" max="5" className={inputClass} value={form.notaAsistencia} onChange={set('notaAsistencia')} />
             </div>
             <div className="space-y-1">
-              <label className={labelClass}>Practica (20%)</label>
+              <label className={labelClass}>Practica ({pesosNota.PESO_PRACTICA || 20}%)</label>
               <input type="number" step="0.1" min="0" max="5" className={inputClass} value={form.notaPractica} onChange={set('notaPractica')} />
             </div>
             <div className="space-y-1">
-              <label className={labelClass}>Examen Final (30%)</label>
+              <label className={labelClass}>Examen Final ({pesosNota.PESO_EXAMEN || 30}%)</label>
               <input type="number" step="0.1" min="0" max="5" className={inputClass} value={form.notaExamenFinal} onChange={set('notaExamenFinal')} />
             </div>
           </div>
@@ -115,6 +121,7 @@ function NotaModal({ estudiante, onClose, onSave }) {
 export default function CursoNotas({ cursoId }) {
   const { authFetch } = useAuth();
   const { getUrl } = useApi();
+  const pesosNota = useAppStore(s => s.pesosNota);
   const [notas, setNotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -157,10 +164,10 @@ export default function CursoNotas({ cursoId }) {
               <thead>
                 <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   <th className="px-5 py-3 text-left">Estudiante</th>
-                  <th className="px-3 py-3 text-center">Maestro<br/><span className="font-normal normal-case">(30%)</span></th>
-                  <th className="px-3 py-3 text-center">Asistencia<br/><span className="font-normal normal-case">(20%)</span></th>
-                  <th className="px-3 py-3 text-center">Practica<br/><span className="font-normal normal-case">(20%)</span></th>
-                  <th className="px-3 py-3 text-center">Examen<br/><span className="font-normal normal-case">(30%)</span></th>
+                  <th className="px-3 py-3 text-center">Maestro<br/><span className="font-normal normal-case">({pesosNota.PESO_MAESTRO || 30}%)</span></th>
+                  <th className="px-3 py-3 text-center">Asistencia<br/><span className="font-normal normal-case">({pesosNota.PESO_ASISTENCIA || 20}%)</span></th>
+                  <th className="px-3 py-3 text-center">Practica<br/><span className="font-normal normal-case">({pesosNota.PESO_PRACTICA || 20}%)</span></th>
+                  <th className="px-3 py-3 text-center">Examen<br/><span className="font-normal normal-case">({pesosNota.PESO_EXAMEN || 30}%)</span></th>
                   <th className="px-3 py-3 text-center">Final</th>
                   <th className="px-3 py-3 text-center">Acciones</th>
                 </tr>

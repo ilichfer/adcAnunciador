@@ -43,6 +43,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
     { id: 'ministries',     label: 'Ministerios',         icon: 'fa-sitemap' },
     { id: 'users',          label: 'Usuarios',            icon: 'fa-users' },
     { id: 'cursos',         label: 'Cursos',              icon: 'fa-graduation-cap' },
+    { id: 'configuracion',  label: 'Configuración',        icon: 'fa-cog' },
     { id: 'monthly-image',  label: 'Imagen del Mes',       icon: 'fa-image' },
     { id: 'contact-admin',  label: 'Contactos',            icon: 'fa-envelope' },
   ];

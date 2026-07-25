@@ -73,6 +73,9 @@ export const useAppStore = create(
       /** Asignaciones de ministerios */
       assignments: [],
 
+      /** Configuración global de pesos de nota */
+      pesosNota: { PESO_MAESTRO: 30, PESO_ASISTENCIA: 20, PESO_PRACTICA: 20, PESO_EXAMEN: 30 },
+
       // ── Acciones de navegación ────────────────────────────────────────────
 
       setActiveTab: (tab) => set({ activeTab: tab }, false, 'setActiveTab'),
@@ -96,7 +99,7 @@ export const useAppStore = create(
           return r.json().catch(() => { throw new Error('Respuesta no es JSON'); });
         };
 
-        const [user, users, events, ministries, tcd, assignments] =
+        const [user, users, events, ministries, tcd, assignments, pesosNota] =
           await Promise.allSettled([
             fetch(`${API_BASE}/user`,        { headers }).then(safeJson), // Perfil actual
             fetch(`${API_BASE}/users`,       { headers }).then(safeJson), // Lista de servidores
@@ -104,6 +107,7 @@ export const useAppStore = create(
             fetch(`${API_BASE}/ministries`,  { headers }).then(safeJson), // Estructura
             fetch(`${API_BASE}/tcd`,         { headers }).then(safeJson), // Galería TCD
             fetch(`${API_BASE}/assignments`, { headers }).then(safeJson).catch(() => []), // Especialidades
+            fetch(`${API_BASE}/configuracion/pesos-nota`, { headers }).then(safeJson).catch(() => null), // Pesos de nota
           ]);
 
         // Log para ver el estado de todas las peticiones al terminar el Promise.allSettled
@@ -135,6 +139,9 @@ export const useAppStore = create(
             assignments: assignments.status === 'fulfilled'
                            ? (Array.isArray(assignments.value) ? assignments.value : [])
                            : [],
+            pesosNota:    pesosNota.status === 'fulfilled' && pesosNota.value && typeof pesosNota.value === 'object'
+                           ? pesosNota.value
+                           : { PESO_MAESTRO: 30, PESO_ASISTENCIA: 20, PESO_PRACTICA: 20, PESO_EXAMEN: 30 },
           },
           false,
           'fetchAppData/success',
@@ -153,6 +160,7 @@ export const useAppStore = create(
             ministries: [],
             assignments: [],
             activeTab: 'schedule',
+            pesosNota: { PESO_MAESTRO: 30, PESO_ASISTENCIA: 20, PESO_PRACTICA: 20, PESO_EXAMEN: 30 },
           },
           false,
           'resetAppData',
@@ -308,6 +316,15 @@ export const useAppStore = create(
           }),
           false,
           'removeAssignment',
+        ),
+
+      // ── Acciones: Configuración ──────────────────────────────────────────
+
+      setPesosNota: (pesos) =>
+        set(
+          { pesosNota: pesos },
+          false,
+          'setPesosNota',
         ),
 
     }),

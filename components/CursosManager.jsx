@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useApi } from '../components/useApi.js';
+import { useAppStore } from '../store/UseAppStore.jsx';
 import CursoDetalle from './CursoDetalle.jsx';
 
 const EMPTY_CURSO = {
@@ -10,6 +11,7 @@ const EMPTY_CURSO = {
 function HistoricoNotasModal({ onClose }) {
   const { authFetch } = useAuth();
   const { getUrl } = useApi();
+  const pesosNota = useAppStore(s => s.pesosNota);
   const [personas, setPersonas] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [seleccionada, setSeleccionada] = useState(null);
@@ -79,10 +81,10 @@ function HistoricoNotasModal({ onClose }) {
             <thead>
               <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <th className="px-4 py-2.5 text-left">Curso</th>
-                <th className="px-3 py-2.5 text-center">Maestro (30%)</th>
-                <th className="px-3 py-2.5 text-center">Asistencia (20%)</th>
-                <th className="px-3 py-2.5 text-center">Practica (20%)</th>
-                <th className="px-3 py-2.5 text-center">Examen (30%)</th>
+                <th className="px-3 py-2.5 text-center">Maestro ({pesosNota.PESO_MAESTRO || 30}%)</th>
+                <th className="px-3 py-2.5 text-center">Asistencia ({pesosNota.PESO_ASISTENCIA || 20}%)</th>
+                <th className="px-3 py-2.5 text-center">Practica ({pesosNota.PESO_PRACTICA || 20}%)</th>
+                <th className="px-3 py-2.5 text-center">Examen ({pesosNota.PESO_EXAMEN || 30}%)</th>
                 <th className="px-3 py-2.5 text-center">Final</th>
               </tr>
             </thead>

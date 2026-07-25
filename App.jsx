@@ -21,6 +21,7 @@ import CoordinatorReport from './components/CoordinatorReport.jsx';
 import BirthdayManager  from './components/BirthdayManager.jsx';
 import MonthlyImageManager from './components/MonthlyImageManager.jsx';
 import CursosManager      from './components/CursosManager.jsx';
+import ConfiguracionPesoNotas from './components/ConfiguracionPesoNotas.jsx';
 import NotificationToast from './components/notifications/NotificationToast.jsx';
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
@@ -52,7 +53,7 @@ function Unauthorized() {
 }
 
 // ── Tabs permitidos por rol ───────────────────────────────────────────────────
-const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'birthdays', 'monthly-image', 'contact-admin', 'cursos']);
+const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'birthdays', 'monthly-image', 'contact-admin', 'cursos', 'configuracion']);
 const SERVER_TABS = new Set(['profile', 'schedule', 'tcd', 'birthdays']); // 'reports' solo ADMIN
 
 const App = () => {
@@ -182,6 +183,7 @@ const App = () => {
         {currentTab === 'monthly-image'  && (canView('monthly-image')  ? <MonthlyImageManager /> : <Unauthorized />)}
         {currentTab === 'contact-admin'  && (canView('contact-admin')  ? <ContactAdmin />         : <Unauthorized />)}
         {currentTab === 'cursos'         && (canView('cursos')         ? <CursosManager />         : <Unauthorized />)}
+        {currentTab === 'configuracion'  && (canView('configuracion')  ? <ConfiguracionPesoNotas /> : <Unauthorized />)}
 
       </main>
 
