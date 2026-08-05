@@ -252,7 +252,8 @@ export const AuthProvider = ({ children }) => {
   }, [authUser, clearSession]);
 
   const isAdmin    = authUser?.rol === 'ADMIN';
-  const isServidor = authUser?.rol === 'SERVIDOR';
+  const isServidor = authUser?.rol === 'SERVIDOR' || authUser?.rol === 'USER';
+  const isUsuario  = authUser?.rol === 'USUARIO';
 
   return (
     <AuthContext.Provider value={{
@@ -262,6 +263,7 @@ export const AuthProvider = ({ children }) => {
       authFetch,
       isAdmin,
       isServidor,
+      isUsuario,
     }}>
       {children}
 

@@ -1,6 +1,7 @@
 // App.jsx — con control de acceso por rol
 // ADMIN   → ve todas las vistas
-// SERVIDOR → solo profile, schedule, tcd, reports
+// SERVIDOR → solo profile, schedule, tcd, birthdays
+// USUARIO → solo profile, tcd, birthdays
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Navbar          from './components/Navbar.jsx';
@@ -17,6 +18,7 @@ import Contact         from './components/Contact.jsx';
 import ContactAdmin    from './components/ContactAdmin.jsx';
 import Login           from './components/Login.jsx';
 import LandingPage     from './components/LandingPage.jsx';
+import PublicRegisterPage from './components/PublicRegisterPage.jsx';
 import CoordinatorReport from './components/CoordinatorReport.jsx';
 import BirthdayManager  from './components/BirthdayManager.jsx';
 import MonthlyImageManager from './components/MonthlyImageManager.jsx';
@@ -55,10 +57,14 @@ function Unauthorized() {
 // ── Tabs permitidos por rol ───────────────────────────────────────────────────
 const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'birthdays', 'monthly-image', 'contact-admin', 'cursos', 'configuracion']);
 const SERVER_TABS = new Set(['profile', 'schedule', 'tcd', 'birthdays']); // 'reports' solo ADMIN
+const USUARIO_TABS = new Set(['profile', 'tcd', 'birthdays']);
 
 const App = () => {
-  const { authUser, logout, isAdmin } = useAuth();
+  const { authUser, logout, isAdmin, isUsuario } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(
+    () => new URLSearchParams(window.location.search).get('registro') === '1'
+  );
   const [toastNotification, setToastNotification] = useState(null);
   const { getUrl } = useApi();
 
@@ -87,10 +93,13 @@ const App = () => {
 
   // Construir set de tabs permitidos dinámicamente
   const allowedTabs = useMemo(() => {
-    const tabs = new Set(isAdmin ? ADMIN_TABS : SERVER_TABS);
+    const tabs = new Set(isAdmin ? ADMIN_TABS : isUsuario ? USUARIO_TABS : SERVER_TABS);
     if (isCoordinatorToday) tabs.add('coordinator-report');
     return tabs;
-  }, [isAdmin, isCoordinatorToday]);
+  }, [isAdmin, isUsuario, isCoordinatorToday]);
+
+  // Tab por defecto según rol
+  const defaultTab = isUsuario ? 'profile' : 'schedule';
 
   useEffect(() => {
     if (authUser) {
@@ -126,12 +135,12 @@ const App = () => {
 
   const closeToast = () => setToastNotification(null);
 
-  // Si el tab activo no está permitido para el rol, redirige a schedule
+  // Si el tab activo no está permitido para el rol, redirige al tab por defecto
   useEffect(() => {
     if (authUser && !allowedTabs.has(activeTab)) {
-      setActiveTab('schedule');
+      setActiveTab(defaultTab);
     }
-  }, [authUser, activeTab]);
+  }, [authUser, activeTab, defaultTab]);
 
   const handleLogout = () => {
     logout();
@@ -139,7 +148,15 @@ const App = () => {
     setShowLogin(false); // Al cerrar sesión, vuelve a la LandingPage
   };
 
+  const handleRegisterBack = () => {
+    window.history.replaceState(null, '', window.location.pathname);
+    setShowRegister(false);
+  };
+
   if (!authUser) {
+    if (showRegister) {
+      return <PublicRegisterPage onBack={handleRegisterBack} onLogin={() => setShowLogin(true)} />;
+    }
     if (showLogin) {
       return <Login onBack={() => setShowLogin(false)} />;
     }
@@ -148,7 +165,7 @@ const App = () => {
   if (loading)   return <AppLoader />;
 
   const canView   = (tab) => allowedTabs.has(tab);
-  const currentTab = canView(activeTab) ? activeTab : 'schedule';
+  const currentTab = canView(activeTab) ? activeTab : defaultTab;
 
   return (
     <div className="min-h-screen bg-slate-50">

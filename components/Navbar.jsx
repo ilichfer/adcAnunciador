@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
 
 const Navbar = ({ activeTab, setActiveTab }) => {
-  const { isAdmin, authUser } = useAuth();
+  const { isAdmin, isUsuario, authUser } = useAuth();
   const events = useAppStore(s => s.events);
   const [isOpen, setIsOpen]             = useState(false);
   const [showTcdSubmenu, setShowTcdSubmenu] = useState(false);
@@ -17,6 +17,13 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   );
 
   // ── Tabs por rol ────────────────────────────────────────────────────────────
+  // Tabs que VE el USUARIO
+  const usuarioTabs = [
+    { id: 'birthdays', label: 'Cumpleaños', icon: 'fa-cake-candles' },
+    { id: 'tcd',       label: 'Mi TCD',      icon: 'fa-book-open' },
+    { id: 'profile',   label: 'Mi Perfil',   icon: 'fa-user' },
+  ];
+
   // Tabs que VE cualquier usuario (SERVIDOR / ADMIN)
   const commonTabs = [
     { id: 'schedule',       label: 'Programación',      icon: 'fa-calendar-alt' },
@@ -49,7 +56,15 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   ];
 
   // Lista final según rol
-  const tabs = isAdmin ? [...commonTabs, ...adminTabs] : commonTabs;
+  const tabs = isAdmin ? [...commonTabs, ...adminTabs] : isUsuario ? usuarioTabs : commonTabs;
+
+  // Badge de rol
+  const rolBadgeClass = isAdmin
+    ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
+    : isUsuario
+      ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+      : 'bg-slate-50 text-slate-400 border-slate-200';
+  const rolLabel = isAdmin ? 'Admin' : isUsuario ? 'Usuario' : 'Servidor';
 
   // ── Cerrar submenu al hacer click fuera ─────────────────────────────────────
   useEffect(() => {
@@ -79,12 +94,8 @@ const Navbar = ({ activeTab, setActiveTab }) => {
           <div className="flex items-center space-x-2">
             <span className="font-black text-xl tracking-tighter text-indigo-600 uppercase">ADC</span>
             {/* Badge de rol */}
-            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
-              isAdmin
-                ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                : 'bg-slate-50 text-slate-400 border-slate-200'
-            }`}>
-              {isAdmin ? 'Admin' : 'Servidor'}
+            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${rolBadgeClass}`}>
+              {rolLabel}
             </span>
           </div>
 
@@ -152,12 +163,8 @@ const Navbar = ({ activeTab, setActiveTab }) => {
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-2">
               <span className="font-black text-xl text-indigo-600 uppercase tracking-tighter">ADC</span>
-              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                isAdmin
-                  ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                  : 'bg-slate-50 text-slate-400 border-slate-200'
-              }`}>
-                {isAdmin ? 'Admin' : 'Servidor'}
+              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${rolBadgeClass}`}>
+                {rolLabel}
               </span>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-slate-400 p-1">
