@@ -23,6 +23,11 @@ import BirthdayManager  from './components/BirthdayManager.jsx';
 import MonthlyImageManager from './components/MonthlyImageManager.jsx';
 import CursosManager      from './components/CursosManager.jsx';
 import ConfiguracionPesoNotas from './components/ConfiguracionPesoNotas.jsx';
+import Calendario      from './components/Calendario.jsx';
+import PanelPastor     from './components/PanelPastor.jsx';
+import Bitacora        from './components/Bitacora.jsx';
+import NotificacionesDispositivo from './components/NotificacionesDispositivo.jsx';
+import { desactivarPush } from './components/pwa.js';
 import NotificationToast from './components/notifications/NotificationToast.jsx';
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
@@ -54,8 +59,8 @@ function Unauthorized() {
 }
 
 // ── Tabs permitidos por rol ───────────────────────────────────────────────────
-const ADMIN_TABS  = new Set(['profile', 'schedule', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'birthdays', 'monthly-image', 'contact-admin', 'cursos', 'configuracion']);
-const SERVER_TABS = new Set(['profile', 'schedule', 'tcd', 'birthdays']); // 'reports' solo ADMIN
+const ADMIN_TABS  = new Set(['profile', 'schedule', 'calendario', 'panel-pastor', 'auditoria', 'tcd', 'reports', 'service-search', 'ministries', 'users', 'birthdays', 'monthly-image', 'contact-admin', 'cursos', 'configuracion']);
+const SERVER_TABS = new Set(['profile', 'schedule', 'calendario', 'tcd', 'birthdays']); // 'reports' solo ADMIN
 const USUARIO_TABS = new Set(['profile', 'tcd', 'birthdays']);
 
 const App = () => {
@@ -172,7 +177,9 @@ const App = () => {
     }
   }, [authUser, activeTab, allowedTabs]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Este dispositivo deja de recibir notificaciones de la persona que cierra sesión
+    await desactivarPush();
     logout();
     resetAppData();
     setShowLogin(false); // Al cerrar sesión, vuelve a la LandingPage
@@ -213,10 +220,13 @@ const App = () => {
       <Navbar activeTab={currentTab} setActiveTab={setActiveTab} />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Aviso para instalar la app y activar notificaciones en este dispositivo */}
+        <NotificacionesDispositivo />
 
         {/* ── Vistas comunes (todos los roles) ─────────────────────────── */}
         {currentTab === 'profile'  && <Profile />}
         {currentTab === 'schedule' && <ErrorBoundary><Schedule /></ErrorBoundary>}
+        {currentTab === 'calendario' && <ErrorBoundary><Calendario /></ErrorBoundary>}
         {currentTab === 'tcd'      && <TCDManager />}
         {currentTab === 'reports'  && <Reports />}
         {currentTab === 'birthdays' && <BirthdayManager />}
@@ -231,6 +241,8 @@ const App = () => {
         {currentTab === 'contact-admin'  && (canView('contact-admin')  ? <ContactAdmin />         : <Unauthorized />)}
         {currentTab === 'cursos'         && (canView('cursos')         ? <CursosManager />         : <Unauthorized />)}
         {currentTab === 'configuracion'  && (canView('configuracion')  ? <ConfiguracionPesoNotas /> : <Unauthorized />)}
+        {currentTab === 'panel-pastor'   && (canView('panel-pastor')   ? <ErrorBoundary><PanelPastor /></ErrorBoundary> : <Unauthorized />)}
+        {currentTab === 'auditoria'      && (canView('auditoria')      ? <Bitacora /> : <Unauthorized />)}
 
       </main>
 

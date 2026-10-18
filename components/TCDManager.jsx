@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
 import { useApi, apiFetch } from './useApi.js';
+import { comprimirImagen } from './tcd/comprimirImagen.js';
+import RachaTcd from './tcd/RachaTcd.jsx';
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────
 
@@ -43,8 +45,10 @@ function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
     setLoading(true);
     setError(null);
     try {
+      // Se reduce el peso de la foto antes de enviarla (más rápido con datos móviles)
+      const liviano = await comprimirImagen(file);
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', liviano);
       formData.append('idPersona', currentUser.id);
       const res = await apiFetch(getUrl('/upload'), { method: 'POST', body: formData });
       if (!res.ok) {
@@ -264,6 +268,8 @@ const handleUpdaateFile = () => {
   return (
     <div className="space-y-8">
       <TCDUploader onUpload={addTcdEntry} currentUser={authUser} onUpdateFile={handleUpdaateFile} />
+
+      <RachaTcd idPersona={authUser?.id} recargar={updateFile} />
 
       <div className="space-y-4">
         <div className="items-center flex-wrap gap-4">

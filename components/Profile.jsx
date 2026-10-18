@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
 import { useApi, apiFetch } from './useApi.js';
+import ConfirmarTurno, { EstadoConfirmacion } from './ConfirmarTurno.jsx';
+import NotificacionesDispositivo from './NotificacionesDispositivo.jsx';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -77,7 +79,7 @@ function ConsultDetailView({ data, onBack }) {
   );
 }
 
-function TurnoCard({ turno, onConsultar }) {
+function TurnoCard({ turno, onConsultar, onCambioTurno }) {
   const fecha = new Date(turno.fechaServcio + 'T00:00:00');
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
@@ -102,6 +104,7 @@ function TurnoCard({ turno, onConsultar }) {
           {diaCorto}
         </span>
         {!esFuturo && <span className="text-[10px] text-slate-900 font-bold uppercase">Pasado</span>}
+        {esFuturo && turno.idServicio && <EstadoConfirmacion estado={turno.confirmacion} />}
       </div>
       <div className="flex items-center gap-2 mb-2">
         <div className="w-6 h-6 rounded-lg bg-purple-400 flex items-center justify-center">
@@ -126,13 +129,16 @@ function TurnoCard({ turno, onConsultar }) {
         <i className="fas fa-search mr-2"></i>
         Consultar
       </button>
+      {esFuturo && turno.idServicio && (
+        <ConfirmarTurno idServicio={turno.idServicio} estado={turno.confirmacion} onCambio={onCambioTurno} />
+      )}
     </div>
   );
 }
 
 // ─── Sección de programación ──────────────────────────────────────────────────
 
-function MiProgramacion({ schedule, loading, error, onConsultar }) {
+function MiProgramacion({ schedule, loading, error, onConsultar, onCambioTurno }) {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
 
@@ -171,7 +177,7 @@ function MiProgramacion({ schedule, loading, error, onConsultar }) {
       {!loading && !error && schedule.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {schedule.map((turno, idx) => (
-            <TurnoCard key={`${turno.fechaServcio}-${turno.idMinisterio}-${idx}`} turno={turno} onConsultar={onConsultar} />
+            <TurnoCard key={`${turno.fechaServcio}-${turno.idMinisterio}-${idx}`} turno={turno} onConsultar={onConsultar} onCambioTurno={onCambioTurno} />
           ))}
         </div>
       )}
@@ -181,7 +187,7 @@ function MiProgramacion({ schedule, loading, error, onConsultar }) {
 
 // ─── Vista del perfil ─────────────────────────────────────────────────────────
 
-function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsultar, notasHistorico }) {
+function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsultar, notasHistorico, onCambioTurno }) {
   const pesosNota = useAppStore(s => s.pesosNota);
   const ministerios = useMemo(() => {
     if (!user?.ministry) return [];
@@ -262,7 +268,10 @@ function ProfileView({ user, schedule, scheduleLoading, scheduleError, onConsult
       </div>
 
       {/* Programación */}
-      <MiProgramacion schedule={schedule} loading={scheduleLoading} error={scheduleError} onConsultar={onConsultar} />
+      <MiProgramacion schedule={schedule} loading={scheduleLoading} error={scheduleError} onConsultar={onConsultar} onCambioTurno={onCambioTurno} />
+
+      {/* Notificaciones push en este dispositivo */}
+      <NotificacionesDispositivo modo="perfil" />
 
       {/* Historico de Notas */}
       {notasHistorico.length > 0 && (() => {
@@ -449,6 +458,8 @@ const Profile = () => {
       scheduleError={scheduleError}
       onConsultar={handleConsultar}
       notasHistorico={notasHistorico}
+      onCambioTurno={(data) => setSchedule((prev) => prev.map((t) => (t.idServicio === data.idServicio
+        ? { ...t, confirmacion: data.confirmacion, motivoConfirmacion: data.motivoConfirmacion } : t)))}
     />
   );
 };

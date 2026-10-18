@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApi, apiFetch } from './useApi.js';
+import { exportarExcel, exportarPdf } from './tcd/exportarReporte.js';
 
 // Reports NO necesita datos del store: hace su propio fetch al endpoint
 // /api/scheduleByDate con un rango de fechas. Se mantiene igual al original.
@@ -223,6 +224,18 @@ const Reports = () => {
               <p className="text-sm text-slate-400 mt-1">
                 {reportData.length} usuarios · {totalUploads} imágenes en total
               </p>
+            )}
+            {reportData?.length > 0 && (
+              <div className="flex gap-2 mt-3">
+                <button onClick={() => exportarExcel(reportData, range.fechaInicio, range.fechaFin)}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                  <i className="fas fa-file-excel mr-2" aria-hidden="true"></i>Excel
+                </button>
+                <button onClick={() => exportarPdf(reportData, range.fechaInicio, range.fechaFin)}
+                  className="px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-bold hover:bg-rose-700">
+                  <i className="fas fa-file-pdf mr-2" aria-hidden="true"></i>PDF
+                </button>
+              </div>
             )}
           </div>
           <div className="flex items-center gap-3 flex-wrap">

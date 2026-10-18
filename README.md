@@ -165,3 +165,17 @@ npm ci && npm run build
 ```
 
 El directorio `dist/` contiene los archivos estáticos. En el VPS Nginx sirve `/var/www/adc/dist`.
+
+## Funcionalidades pastorales (octubre 2026)
+
+- **Calendario** (`#/calendario`): vista mes/semana, mis turnos o toda la iglesia, confirmar turno,
+  "Agregar a Google Calendar", descargar `.ics` y enlace de sincronización automática.
+- **Confirmación de turnos** en Mi Perfil y en el calendario ("Sí puedo" / "No puedo" con motivo).
+- **TCD**: racha de días seguidos, insignias y compresión de la foto en el celular antes de subirla.
+- **Reportes TCD** exportables a Excel y PDF (las librerías se cargan solo al exportar).
+- **Panel pastoral** (ADMIN): miembros, % TCD, asistencia, crecimiento, resumen semanal y conexión de WhatsApp.
+- **Bitácora** (ADMIN): quién cambió qué y cuándo.
+- **App instalable (PWA)**: `public/manifest.webmanifest`, `public/sw.js`, íconos en `public/icons/`.
+  Notificaciones push desde el aviso de la parte superior o desde Mi Perfil.
+  En iPhone las notificaciones solo funcionan con la app agregada a la pantalla de inicio.
+

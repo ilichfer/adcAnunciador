@@ -6,7 +6,8 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   const { isAdmin, isUsuario, authUser } = useAuth();
   const events = useAppStore(s => s.events);
   const [isOpen, setIsOpen]             = useState(false);
-  const [showTcdSubmenu, setShowTcdSubmenu] = useState(false);
+  // id del submenú abierto en escritorio (TCD o Administración), o null
+  const [submenuAbierto, setSubmenuAbierto] = useState(null);
   const submenuRef = useRef(null);
 
   // Validar si el usuario es coordinador el día de hoy
@@ -27,6 +28,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   // Tabs que VE cualquier usuario (SERVIDOR / ADMIN)
   const commonTabs = [
     { id: 'schedule',       label: 'Programación',      icon: 'fa-calendar-alt' },
+    { id: 'calendario',     label: 'Calendario',        icon: 'fa-calendar-days' },
     { id: 'birthdays',      label: 'Cumpleaños',        icon: 'fa-cake-candles' },
     { id: 'profile',        label: 'Mi Perfil',          icon: 'fa-user' },
     {
@@ -44,15 +46,25 @@ const Navbar = ({ activeTab, setActiveTab }) => {
     ...(isCoordinatorToday ? [{ id: 'coordinator-report', label: 'Coordinador', icon: 'fa-user-tie' }] : []),
   ];
 
-  // Tabs EXTRA que solo ve el ADMIN
+  // Tabs EXTRA que solo ve el ADMIN: el panel arriba y el resto agrupado en "Administración"
   const adminTabs = [
-    { id: 'service-search', label: 'Consultar Servicios', icon: 'fa-search' },
-    { id: 'ministries',     label: 'Ministerios',         icon: 'fa-sitemap' },
-    { id: 'users',          label: 'Usuarios',            icon: 'fa-users' },
-    { id: 'cursos',         label: 'Cursos',              icon: 'fa-graduation-cap' },
-    { id: 'configuracion',  label: 'Configuración',        icon: 'fa-cog' },
-    { id: 'monthly-image',  label: 'Imagen del Mes',       icon: 'fa-image' },
-    { id: 'contact-admin',  label: 'Contactos',            icon: 'fa-envelope' },
+    { id: 'panel-pastor',   label: 'Panel pastoral',      icon: 'fa-chart-line' },
+    {
+      id: 'admin-root',
+      label: 'Administración',
+      icon: 'fa-screwdriver-wrench',
+      hasSubmenu: true,
+      submenu: [
+        { id: 'service-search', label: 'Consultar Servicios', icon: 'fa-search' },
+        { id: 'ministries',     label: 'Ministerios',         icon: 'fa-sitemap' },
+        { id: 'users',          label: 'Usuarios',            icon: 'fa-users' },
+        { id: 'cursos',         label: 'Cursos',              icon: 'fa-graduation-cap' },
+        { id: 'configuracion',  label: 'Configuración',        icon: 'fa-cog' },
+        { id: 'monthly-image',  label: 'Imagen del Mes',       icon: 'fa-image' },
+        { id: 'contact-admin',  label: 'Contactos',            icon: 'fa-envelope' },
+        { id: 'auditoria',      label: 'Bitácora',             icon: 'fa-clipboard-list' },
+      ],
+    },
   ];
 
   // Lista final según rol
@@ -70,7 +82,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (submenuRef.current && !submenuRef.current.contains(event.target)) {
-        setShowTcdSubmenu(false);
+        setSubmenuAbierto(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -80,10 +92,10 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   const handleTabClick = (id) => {
     setActiveTab(id);
     setIsOpen(false);
-    setShowTcdSubmenu(false);
+    setSubmenuAbierto(null);
   };
 
-  const isTcdActive = activeTab === 'tcd' || activeTab === 'reports';
+  const submenuActivo = (tab) => tab.hasSubmenu && tab.submenu.some(sub => sub.id === activeTab);
 
   return (
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -100,23 +112,22 @@ const Navbar = ({ activeTab, setActiveTab }) => {
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex space-x-1 h-full">
+          <div className="hidden md:flex space-x-1 h-full" ref={submenuRef}>
             {tabs.map(tab => (
               <div
                 key={tab.id}
                 className="relative flex items-center h-full"
-                ref={tab.hasSubmenu ? submenuRef : null}
               >
                 <button
                   onClick={() => {
                     if (tab.hasSubmenu) {
-                      setShowTcdSubmenu(!showTcdSubmenu);
+                      setSubmenuAbierto(submenuAbierto === tab.id ? null : tab.id);
                     } else {
                       handleTabClick(tab.id);
                     }
                   }}
                   className={`flex items-center space-x-2 px-3 h-full border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id || (tab.hasSubmenu && isTcdActive)
+                    activeTab === tab.id || submenuActivo(tab)
                       ? 'border-indigo-600 text-indigo-600'
                       : 'border-transparent text-slate-500 hover:text-indigo-500'
                   }`}
@@ -124,12 +135,12 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   <i className={`fas ${tab.icon}`}></i>
                   <span>{tab.label}</span>
                   {tab.hasSubmenu && (
-                    <i className={`fas fa-chevron-down text-[10px] ml-1 transition-transform ${showTcdSubmenu ? 'rotate-180' : ''}`}></i>
+                    <i className={`fas fa-chevron-down text-[10px] ml-1 transition-transform ${submenuAbierto === tab.id ? 'rotate-180' : ''}`}></i>
                   )}
                 </button>
 
-                {tab.hasSubmenu && showTcdSubmenu && (
-                  <div className="absolute top-full left-0 w-48 bg-white border border-slate-200 shadow-xl rounded-b-xl py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                {tab.hasSubmenu && submenuAbierto === tab.id && (
+                  <div className="absolute top-full right-0 w-56 bg-white border border-slate-200 shadow-xl rounded-b-xl py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                     {tab.submenu.map(sub => (
                       <button
                         key={sub.id}

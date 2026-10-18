@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
+    "jspdf": "4.2.1",
+    "jspdf-autotable": "5.0.8",
     "react": "^19.2.3",
     "react-confetti": "^6.4.0",
     "react-dom": "^19.2.3",
     "tailwindcss": "^4.2.1",
+    "write-excel-file": "4.1.1",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
