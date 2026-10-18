@@ -1,5 +1,5 @@
 export default function NotificationItem({ notification, onRead }) {
-  const { id, titulo, mensaje, tipo, fechaServicio, leida, fechaCreacion } = notification;
+  const { titulo, mensaje, tipo, fechaServicio, leida, fechaCreacion } = notification;
 
   const getIcono = () => {
     switch (tipo) {

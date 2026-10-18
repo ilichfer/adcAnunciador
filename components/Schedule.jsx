@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useApi } from '../components/useApi.js';
+import { useApi, apiFetch } from './useApi.js';
 // ESTO CAUSA EL ERROR si no exportaste la función
 import Birthday from './Birthday.jsx';
 
@@ -12,18 +12,6 @@ function ScheduleLoader() {
     <div className="flex flex-col items-center justify-center p-20 gap-3">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       <p className="text-slate-400 text-sm font-medium">Cargando programación...</p>
-    </div>
-  );
-}
-
-function ScheduleError({ message }) {
-  return (
-    <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl">
-      <div className="flex items-center gap-3 mb-2">
-        <i className="fas fa-exclamation-triangle"></i>
-        <h3 className="font-bold">Error al cargar la programación</h3>
-      </div>
-      <p className="text-sm">{message || 'Verifica tu conexión e intenta de nuevo.'}</p>
     </div>
   );
 }
@@ -224,11 +212,10 @@ function Schedule() {
   const [events, setEvents] = useState([]);
   const [birthdays, setBirthdays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { getUrl } = useApi();
 
   useEffect(() => {
-    fetch(getUrl('events'))
+    apiFetch(getUrl('events'))
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -250,15 +237,15 @@ function Schedule() {
         setEvents(data);
         setLoading(false);
       })
-      .catch((err) => {
-        setError(err.message);
+      .catch(() => {
+        // Sin programación o error de red: se muestra la vista vacía
         setLoading(false);
       });
   }, []);
 
 
   useEffect(() => {
-    fetch(getUrl('findBirthday'))
+    apiFetch(getUrl('findBirthday'))
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -279,7 +266,6 @@ function Schedule() {
   }, []);
 
   if (loading) return <ScheduleLoader />;
-  //if (error) return <ScheduleError message={error} />;
   //if (events.length === 0) return <ScheduleEmpty />;
   return <ScheduleView events={events} birthdays={birthdays} />;
 }

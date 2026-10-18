@@ -26,11 +26,11 @@ Aplicación web para la gestión eclesiástica digital de la iglesia **Anunciado
 │   ├── Login.jsx              → Inicio de sesión + cambio de contraseña
 │   ├── Navbar.jsx             → Barra de navegación por tabs (rol-based)
 │   ├── Header.jsx             → Encabezado (logo, campana notificaciones, usuario)
-│   ├── Dashboard.jsx          → Dashboard con estadísticas del usuario
 │   ├── Schedule.jsx           → Programación de servicios
 │   ├── TCDManager.jsx         → Subida de imagen TCD diaria
 │   ├── Reports.jsx            → Reportes TCD (admin)
 │   ├── MinistryManager.jsx    → Gestión de ministerios (admin)
+│   ├── ministry/              → Partes de MinistryManager (tarjetas, formularios, planificador)
 │   ├── UsersManager.jsx       → Gestión de usuarios (admin)
 │   ├── MonthlyImageManager.jsx → Subida imagen del mes (admin)
 │   ├── ContactAdmin.jsx       → Bandeja de mensajes de contacto (admin)
@@ -40,7 +40,9 @@ Aplicación web para la gestión eclesiástica digital de la iglesia **Anunciado
 │   ├── Profile.jsx            → Perfil del usuario
 │   ├── ErrorBoundary.jsx      → Captura de errores React
 │   ├── MetaTags.jsx           → Meta tags SEO
-│   ├── useApi.js              → Configuración URL base de la API
+│   ├── ServiceSearch.jsx      → Consultar/editar programación por fecha (admin)
+│   ├── service-search/        → Partes de ServiceSearch (vista, editores)
+│   ├── useApi.js              → URL base de la API y cliente apiFetch (token + sesión vencida)
 │   │
 │   └── notifications/
 │       ├── NotificationBell.jsx    → Campana con badge
@@ -76,19 +78,23 @@ El servidor de desarrollo inicia en `http://localhost:3000`.
 
 ## Variables de entorno
 
-Copiar `.env.example` a `.env.local`:
+| Archivo | Uso |
+|---|---|
+| `.env.development` | `npm run dev`: `VITE_API_URL=http://localhost:5000/api` |
+| (ninguno) | `npm run build`: la app usa `/api` del mismo dominio (Nginx lo redirige al backend) |
 
-```
-VITE_API_URL=https://anunciaig.com/
-```
+Para apuntar a otro backend define `VITE_API_URL` (ver `.env.example`). Ya no hay que editar
+`useApi.js` para cambiar entre local y producción.
 
-**Nota:** La API base se define en `components/useApi.js`. Por defecto apunta a `http://localhost:5000/api` en desarrollo. Cambiar a `https://anunciaig.com/api` para producción.
+Todas las llamadas a la API pasan por `apiFetch` (`components/useApi.js`), que agrega el token de
+sesión y, si el backend responde 401, cierra la sesión y muestra el aviso de sesión vencida.
+Cada sección tiene su propia dirección (`#/schedule`, `#/tcd`, ...), así que el botón "atrás"
+del navegador y recargar la página funcionan.
 
 ## Roles y acceso
 
 | Tab | ADMIN | SERVIDOR |
 |---|---|---|
-| Dashboard (Inicio) | ✓ | ✓ |
 | Programación | ✓ | ✓ |
 | Mi TCD | ✓ | ✓ |
 | Cumpleaños | ✓ | ✓ |
@@ -140,7 +146,7 @@ VITE_API_URL=https://anunciaig.com/
 
 ## API
 
-Comunicación con backend REST en `http://localhost:5000/api`. Endpoints principales:
+Comunicación con el backend REST en `/api` (producción) o `VITE_API_URL` (desarrollo). Todas las rutas exigen token salvo login, cambio de contraseña, registro público, contacto e imagen del mes. Endpoints principales:
 
 - `POST /api/auth/loginReact` — Login
 - `GET /api/dashboard/stats/{id}` — Estadísticas dashboard
@@ -155,7 +161,7 @@ Ver README del backend para la lista completa.
 ## Despliegue
 
 ```bash
-npm run build
+npm ci && npm run build
 ```
 
-El directorio `dist/` contiene los archivos estáticos para servir (Netlify, VPS, etc.).
+El directorio `dist/` contiene los archivos estáticos. En el VPS Nginx sirve `/var/www/adc/dist`.

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { apiFetch, SESSION_EXPIRED_EVENT } from '../components/useApi.js';
 
 const AuthContext = createContext(null);
 
@@ -228,28 +229,19 @@ export const AuthProvider = ({ children }) => {
     };
   }, [authUser, showWarning, clearSession]);
 
-  // ── authFetch: intercepta 401 ─────────────────────────────────────────────
+  // ── Sesión rechazada por el backend (401) ────────────────────────────────
 
-  const authFetch = useCallback((url, options = {}) => {
-    // Si el body es FormData NO inyectar Content-Type — el browser lo pone
-    // automáticamente con el boundary correcto para multipart/form-data
-    const isFormData = options.body instanceof FormData;
-
-    const headers = {
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(options.headers || {}),
-      ...(authUser?.token ? { Authorization: `Bearer ${authUser.token}` } : {}),
+  useEffect(() => {
+    const onExpired = () => {
+      clearSession();
+      setShowExpired(true);
     };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, [clearSession]);
 
-    return fetch(url, { ...options, headers })
-      .then(res => {
-        if (res.status === 401) {
-          clearSession();
-          setShowExpired(true);
-        }
-        return res;
-      });
-  }, [authUser, clearSession]);
+  // authFetch: cliente HTTP con token (ver apiFetch en useApi.js)
+  const authFetch = apiFetch;
 
   const isAdmin    = authUser?.rol === 'ADMIN';
   const isServidor = authUser?.rol === 'SERVIDOR' || authUser?.rol === 'USER';

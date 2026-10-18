@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
-import { useApi } from '../components/useApi.js';
+import { useApi, apiFetch } from './useApi.js';
 
 // ─── Estado vacío ─────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('idPersona', currentUser.id);
-      const res = await fetch(getUrl('/upload'), { method: 'POST', body: formData });
+      const res = await apiFetch(getUrl('/upload'), { method: 'POST', body: formData });
       if (!res.ok) {
         const body = await res.text();
         throw new Error(body || 'Error al subir la imagen');
@@ -199,14 +199,14 @@ const TCDManager = () => {
   const { getUrl } = useApi();
   const [tdcCount, setTdcCount] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [scheduleError, setSchError] = useState(false);
+  const [, setSchError] = useState(false);
 
   // ── Store ──────────────────────────────────────────────────────────────────
   const tcdEntries = useAppStore(s => s.tcdEntries);
   const addTcdEntry = useAppStore(s => s.addTcdEntry);
 
   // ── Estado local: solo UI ──────────────────────────────────────────────────
-  const [range, setRange] = useState({ start: '', end: '' });
+  const [range] = useState({ start: '', end: '' });
   
   const [details, setDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -227,7 +227,7 @@ const handleUpdaateFile = () => {
       const start = range.start || firstDay;
       const end = range.end || lastDay;
 
-      const res = await fetch(getUrl(`/findTcdPerson?idPersona=${authUser.id}&fechaInicio=${start}&fechaFin=${end}`), {
+      const res = await apiFetch(getUrl(`/findTcdPerson?idPersona=${authUser.id}&fechaInicio=${start}&fechaFin=${end}`), {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
