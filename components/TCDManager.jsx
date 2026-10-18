@@ -41,7 +41,8 @@ function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    // Evita envíos repetidos si se toca el botón varias veces seguidas
+    if (!file || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -99,6 +100,7 @@ function TCDUploader({ onUpload, currentUser ,onUpdateFile}) {
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <button
             onClick={handleUpload}
+            disabled={!file || loading}
             className={`w-full py-3 rounded-xl font-bold transition-all ${file && !loading
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-0.5'
               : 'bg-slate-100 text-slate-400 cursor-not-allowed'
