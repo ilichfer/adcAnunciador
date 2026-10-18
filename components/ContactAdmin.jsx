@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useApi } from './useApi.js';
+import { useApi, apiFetch } from './useApi.js';
 
 const ContactAdmin = () => {
   const { authUser } = useAuth();
@@ -14,9 +14,7 @@ const ContactAdmin = () => {
     setLoading(true);
     try {
       const endpoint = filtro === 'noLeidos' ? '/contacto?soloNoLeidos=true' : '/contacto';
-      const res = await fetch(getUrl(endpoint), {
-        headers: { 'Authorization': `Bearer ${authUser.token}` }
-      });
+      const res = await apiFetch(getUrl(endpoint));
       if (!res.ok) throw new Error('Error al cargar mensajes');
       const data = await res.json();
       setContactos(data);
@@ -33,10 +31,7 @@ const ContactAdmin = () => {
 
   const marcarLeido = async (id) => {
     try {
-      const res = await fetch(getUrl(`/contacto/${id}/leer`), {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${authUser.token}` }
-      });
+      const res = await apiFetch(getUrl(`/contacto/${id}/leer`), { method: 'PUT' });
       if (res.ok) {
         setContactos(prev => prev.map(c => c.id === id ? { ...c, leido: true } : c));
       }

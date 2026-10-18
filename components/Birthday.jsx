@@ -67,7 +67,7 @@ export default function Birthday({ birthdays ,currentMonth}) {
                 ¡Hoy celebramos la vida! 🎉
               </h2>
               <p className="text-lg text-blue-600 font-medium italic">
-                "¡Que Dios bendiga tu vida, que veas su favor y su misericordia cada día!"
+                &ldquo;¡Que Dios bendiga tu vida, que veas su favor y su misericordia cada día!&rdquo;
               </p>
             
             </div>

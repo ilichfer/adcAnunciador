@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useApi } from '../components/useApi.js';
+import { useApi, apiFetch } from './useApi.js';
 
 // Reports NO necesita datos del store: hace su propio fetch al endpoint
 // /api/scheduleByDate con un rango de fechas. Se mantiene igual al original.
@@ -169,7 +169,7 @@ const Reports = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(getUrl(`/scheduleByDate`), {
+        const res = await apiFetch(getUrl(`/scheduleByDate`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(range),
@@ -194,7 +194,7 @@ const Reports = () => {
   const handleShowDetails = async (idPersona) => {
     setDetailsLoading(true);
     try {
-      const res = await fetch(getUrl(`/findTcdPerson?idPersona=${idPersona}&fechaInicio=${range.fechaInicio}&fechaFin=${range.fechaFin}`), {
+      const res = await apiFetch(getUrl(`/findTcdPerson?idPersona=${idPersona}&fechaInicio=${range.fechaInicio}&fechaFin=${range.fechaFin}`), {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });

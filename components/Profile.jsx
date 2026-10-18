@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAppStore } from '../store/UseAppStore.jsx';
-import { useApi } from '../components/useApi.js';
+import { useApi, apiFetch } from './useApi.js';
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -419,7 +419,7 @@ const Profile = () => {
   useEffect(() => {
     if (!authUser?.id) return;
     setSchLoading(true);
-    fetch(getUrl(`/schedule/persona/${authUser.id}`))
+    apiFetch(getUrl(`/schedule/persona/${authUser.id}`))
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(json => { setSchedule(Array.isArray(json) ? json : []); setSchError(false); })
       .catch(() => setSchError(true))
@@ -428,7 +428,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (!authUser?.id) return;
-    fetch(getUrl(`/personas/${authUser.id}/notas-historico`))
+    apiFetch(getUrl(`/personas/${authUser.id}/notas-historico`))
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(json => setNotasHistorico(Array.isArray(json) ? json : []))
       .catch(() => setNotasHistorico([]));

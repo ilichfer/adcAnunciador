@@ -19,15 +19,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { API_BASE } from '../components/useApi.js';
-
-// ---------------------------------------------------------------------------
-// Helper: construir headers con el token Bearer
-// ---------------------------------------------------------------------------
-const authHeaders = (token) => ({
-  'Content-Type': 'application/json',
-  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-});
+import { API_BASE, apiFetch } from '../components/useApi.js';
 
 // ---------------------------------------------------------------------------
 // Transformación de usuario (igual que en App.jsx)
@@ -45,7 +37,7 @@ const mapearUsuario = (p) => ({
 // ---------------------------------------------------------------------------
 export const useAppStore = create(
   devtools(
-    (set, get) => ({
+    (set) => ({
 
       // ── Estado inicial ────────────────────────────────────────────────────
 
@@ -86,12 +78,9 @@ export const useAppStore = create(
        * Carga todos los datos de la app en paralelo.
        * Llamar desde App.jsx cuando authUser esté disponible.
        *
-       * @param {string} token  JWT del usuario autenticado
        */
-      fetchAppData: async (token) => {
+      fetchAppData: async () => {
         set({ loading: true }, false, 'fetchAppData/start');
-
-        const headers = authHeaders(token);
 
         // safeJson: si el servidor devuelve HTML de error no explota con SyntaxError
         const safeJson = (r) => {
@@ -99,23 +88,15 @@ export const useAppStore = create(
           return r.json().catch(() => { throw new Error('Respuesta no es JSON'); });
         };
 
-        const [user, users, events, ministries, tcd, assignments, pesosNota] =
+        // apiFetch agrega el token guardado en la sesión y cierra la sesión si el backend responde 401
+        const [user, users, events, ministries, pesosNota] =
           await Promise.allSettled([
-            fetch(`${API_BASE}/user`,        { headers }).then(safeJson), // Perfil actual
-            fetch(`${API_BASE}/users`,       { headers }).then(safeJson), // Lista de servidores
-            fetch(`${API_BASE}/events`,      { headers }).then(safeJson), // Agenda
-            fetch(`${API_BASE}/ministries`,  { headers }).then(safeJson), // Estructura
-            fetch(`${API_BASE}/tcd`,         { headers }).then(safeJson), // Galería TCD
-            fetch(`${API_BASE}/assignments`, { headers }).then(safeJson).catch(() => []), // Especialidades
-            fetch(`${API_BASE}/configuracion/pesos-nota`, { headers }).then(safeJson).catch(() => null), // Pesos de nota
+            apiFetch(`${API_BASE}/user`).then(safeJson),       // Perfil actual
+            apiFetch(`${API_BASE}/users`).then(safeJson),      // Lista de servidores
+            apiFetch(`${API_BASE}/events`).then(safeJson),     // Agenda
+            apiFetch(`${API_BASE}/ministries`).then(safeJson), // Estructura
+            apiFetch(`${API_BASE}/configuracion/pesos-nota`).then(safeJson).catch(() => null), // Pesos de nota
           ]);
-
-        // Log para ver el estado de todas las peticiones al terminar el Promise.allSettled
-        console.log("DEBUG [Store] - Resultados Raw:", { user, users, events, ministries, tcd, assignments });
-
-        if (events.status === 'fulfilled') {
-          console.log("DEBUG [Store] - Estructura detectada en /events:", events.value);
-        }
 
         set(
           {
@@ -135,10 +116,9 @@ export const useAppStore = create(
             ministries:  ministries.status  === 'fulfilled'
                            ? (Array.isArray(ministries.value) ? ministries.value : [])
                            : [],
-            tcdEntries:  tcd.status         === 'fulfilled' ? tcd.value         : [],
-            assignments: assignments.status === 'fulfilled'
-                           ? (Array.isArray(assignments.value) ? assignments.value : [])
-                           : [],
+            // El backend no expone TCD ni especialidades en bloque: se llenan desde cada vista
+            tcdEntries:  [],
+            assignments: [],
             pesosNota:    pesosNota.status === 'fulfilled' && pesosNota.value && typeof pesosNota.value === 'object'
                            ? pesosNota.value
                            : { PESO_MAESTRO: 30, PESO_ASISTENCIA: 20, PESO_PRACTICA: 20, PESO_EXAMEN: 30 },

@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export const useNotificationStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       notifications: [],
       unreadCount: 0,
       initialized: false,

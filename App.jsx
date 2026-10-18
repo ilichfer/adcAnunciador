@@ -14,7 +14,6 @@ import TCDManager      from './components/TCDManager.jsx';
 import Reports         from './components/Reports.jsx';
 import MinistryManager from './components/MinistryManager.jsx';
 import ServiceSearch   from './components/ServiceSearch.jsx';
-import Contact         from './components/Contact.jsx';
 import ContactAdmin    from './components/ContactAdmin.jsx';
 import Login           from './components/Login.jsx';
 import LandingPage     from './components/LandingPage.jsx';
@@ -28,7 +27,7 @@ import NotificationToast from './components/notifications/NotificationToast.jsx'
 import { useAuth }     from './context/AuthContext.jsx';
 import { useAppStore } from './store/UseAppStore.jsx';
 import { useNotifications } from './hooks/useNotifications.js';
-import { useApi } from './components/useApi.js';
+import { useApi, apiFetch } from './components/useApi.js';
 
 function AppLoader() {
   return (
@@ -75,12 +74,7 @@ const App = () => {
   const fetchAppData = useAppStore(s => s.fetchAppData);
   const resetAppData = useAppStore(s => s.resetAppData);
   
-  const { checkAndShowToast } = useNotifications();
-
-  // Debug log para monitorear la llegada de eventos desde el Store
-  useEffect(() => {
-    console.log("DEBUG [App.jsx] - Estado actual de events:", events);
-  }, [events]);
+  useNotifications();
 
   // Validar si el usuario es coordinador el día de hoy
   const isCoordinatorToday = useMemo(() => {
@@ -103,7 +97,7 @@ const App = () => {
 
   useEffect(() => {
     if (authUser) {
-      fetchAppData(authUser.token);
+      fetchAppData();
     } else {
       resetAppData();
     }
@@ -116,9 +110,7 @@ const App = () => {
       notificationChecked.current = true;
       const loadNotifications = async () => {
         try {
-          const res = await fetch(getUrl(`/notificaciones/${authUser.id}/no-leidas`), {
-            headers: { 'Authorization': `Bearer ${authUser.token}` }
-          });
+          const res = await apiFetch(getUrl(`/notificaciones/${authUser.id}/no-leidas`));
           if (res.ok) {
             const data = await res.json();
             if (data.length > 0) {
@@ -141,6 +133,44 @@ const App = () => {
       setActiveTab(defaultTab);
     }
   }, [authUser, activeTab, defaultTab]);
+
+  // ── Navegación con la URL (#/tab): el botón "atrás" del navegador funciona
+  //    y se puede recargar o compartir el enlace de una sección ──────────────
+  const pendingHashTab = useRef(null);
+
+  useEffect(() => {
+    if (!authUser) return;
+    const tabFromHash = () => window.location.hash.replace(/^#\/?/, '');
+    const initial = tabFromHash();
+    if (initial && allowedTabs.has(initial) && initial !== activeTab) {
+      pendingHashTab.current = initial;
+      setActiveTab(initial);
+    }
+
+    const onPopState = () => {
+      const tab = tabFromHash();
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!authUser || !allowedTabs.has(activeTab)) return;
+    // Mientras se aplica la sección que venía en la URL no se toca el historial
+    if (pendingHashTab.current) {
+      if (pendingHashTab.current !== activeTab) return;
+      pendingHashTab.current = null;
+    }
+    const target = `#/${activeTab}`;
+    if (window.location.hash === target) return;
+    const url = `${window.location.pathname}${window.location.search}${target}`;
+    if (window.location.hash) {
+      window.history.pushState(null, '', url);
+    } else {
+      window.history.replaceState(null, '', url);
+    }
+  }, [authUser, activeTab, allowedTabs]);
 
   const handleLogout = () => {
     logout();
