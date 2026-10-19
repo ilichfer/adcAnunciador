@@ -50,8 +50,14 @@ export default function WhatsAppConfig() {
       const r = await apiFetch(getUrl('/whatsapp/conectar'), { method: 'POST' });
       if (!r.ok) throw new Error(await r.text());
       const data = await r.json();
-      if (data.qr) setQr(data.qr);
-      else cargar();
+      if (data.qr) {
+        setQr(data.qr);
+      } else if (data.estado === 'CONECTADO') {
+        cargar();
+      } else {
+        setMensaje({ ok: false, texto: 'WhatsApp todavía está preparando el código. Espera unos segundos y vuelve a tocar “Mostrar código QR”.' });
+        cargar();
+      }
     } catch (e) {
       setMensaje({ ok: false, texto: e.message || 'No se pudo generar el código QR' });
     } finally {
